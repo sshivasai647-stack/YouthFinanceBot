@@ -7,6 +7,9 @@ import CitizenLayout     from './layouts/CitizenLayout'
 import CounsellorLayout  from './layouts/CounsellorLayout'
 import AdminLayout       from './layouts/AdminLayout'
 
+// Admin pages
+import AdminDashboard   from './pages/admin/AdminDashboard'
+
 // Public pages
 import LandingPage    from './pages/public/LandingPage'
 import LoginPage      from './pages/public/LoginPage'
@@ -85,7 +88,7 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route index              element={<div className="p-6">Admin Dashboard — Coming Soon</div>} />
+        <Route index              element={<AdminDashboard />} />
         <Route path="users"       element={<div className="p-6">Users — Coming Soon</div>}          />
         <Route path="analytics"   element={<div className="p-6">Analytics — Coming Soon</div>}      />
         <Route path="settings"    element={<div className="p-6">Settings — Coming Soon</div>}       />

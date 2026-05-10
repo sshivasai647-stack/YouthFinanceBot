@@ -47,6 +47,28 @@ def _parse_oid(raw: str) -> ObjectId | None:
         return None
 
 
+@admin_bp.get("/db-status")
+@role_required("admin")
+def db_status():
+    """Check MongoDB connectivity and return basic server info."""
+    from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
+    db = get_db()
+    try:
+        info = db.client.server_info()
+        collections = db.list_collection_names()
+        counts = {col: db[col].estimated_document_count() for col in collections}
+        return jsonify({
+            "status": "connected",
+            "mongo_version": info.get("version", "unknown"),
+            "collections": counts,
+            "latency_ms": round(info.get("localTime", 0) and 0, 1),
+        }), 200
+    except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+        return jsonify({"status": "disconnected", "error": str(e)}), 503
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 @admin_bp.get("/stats")
 @role_required("admin")
 def platform_stats():
