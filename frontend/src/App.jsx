@@ -9,6 +9,7 @@ import AdminLayout       from './layouts/AdminLayout'
 
 // Admin pages
 import AdminDashboard   from './pages/admin/AdminDashboard'
+import AdminUsersPage   from './pages/admin/AdminUsersPage'
 
 // Public pages
 import LandingPage    from './pages/public/LandingPage'
@@ -89,7 +90,7 @@ export default function App() {
         }
       >
         <Route index              element={<AdminDashboard />} />
-        <Route path="users"       element={<div className="p-6">Users — Coming Soon</div>}          />
+        <Route path="users"       element={<AdminUsersPage />}                                        />
         <Route path="analytics"   element={<div className="p-6">Analytics — Coming Soon</div>}      />
         <Route path="settings"    element={<div className="p-6">Settings — Coming Soon</div>}       />
       </Route>
