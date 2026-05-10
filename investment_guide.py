@@ -565,7 +565,8 @@ def calculate_investment_growth(
 
 # ─────────────────────────────────────────────
 # 4. CREATE INVESTMENT PLAN
-# ────def create_investment_plan(
+# ─────────────────────────────────────────────
+def create_investment_plan(
     income    : float,
     age       : int,
     goals_list: List[str],

@@ -801,7 +801,33 @@ def get_legal_protection_info() -> Dict:
 
 
 # ─────────────────────────────────────────────
-# 8. MAIN TEST
+# 8. STANDALONE EMI CALCULATOR (API)
+# ─────────────────────────────────────────────
+
+def calculate_emi(principal: float, annual_interest_rate: float, tenure_months: int) -> float:
+    """
+    Equated Monthly Installment (reducing balance), same formula as ``Debt._calculate_emi``,
+    but with an explicit tenure in months for API use.
+    """
+    if principal < 0:
+        raise ValueError("principal cannot be negative")
+    if tenure_months <= 0:
+        raise ValueError("tenure_months must be positive")
+
+    monthly_rate = annual_interest_rate / 12 / 100
+    if monthly_rate == 0:
+        return round(principal / tenure_months, 2)
+
+    emi = (
+        principal
+        * monthly_rate
+        * math.pow(1 + monthly_rate, tenure_months)
+    ) / (math.pow(1 + monthly_rate, tenure_months) - 1)
+    return round(emi, 2)
+
+
+# ─────────────────────────────────────────────
+# 9. MAIN TEST
 # ─────────────────────────────────────────────
 
 def main():

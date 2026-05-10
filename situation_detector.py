@@ -11,6 +11,7 @@ Paths:
     F     → mental_health_guardian.py (Mental health crisis)
     G     → statement_analyzer.py     (Expense tracking)
     H     → investment_guide.py       (Ready to invest)
+    I     → legal_protector.py        (Legal protection / lender harassment)
 
 Author: Youth Financial Guardian Project
 Compliance: DPDPA 2023 — no PII stored beyond session
@@ -30,6 +31,7 @@ PATH_BETTING         = "PATH_E"        # Gambling / betting addiction
 PATH_MENTAL_HEALTH   = "PATH_F"        # Crisis / overwhelmed / shame
 PATH_EXPENSE         = "PATH_G"        # Track & manage expenses
 PATH_INVEST          = "PATH_H"        # Stable income, ready to grow
+PATH_LEGAL           = "PATH_I"        # Legal rights / loan harassment
 PATH_UNKNOWN         = "PATH_UNKNOWN"  # Needs clarification
 
 # ─────────────────────────────────────────────
@@ -94,6 +96,13 @@ INVEST_KEYWORDS = [
     "dividend", "equity", "debt fund", "asset allocation"
 ]
 
+LEGAL_KEYWORDS = [
+    "harassment", "recovery agent", "illegal loan", "hidden charge", "hidden fee",
+    "extra fee", "no agreement", "no paperwork", "loan agreement", "contract terms",
+    "penalty", "prepayment", "wrong interest", "unfair practice", "banking ombudsman",
+    "consumer court", "rbi complaint", "no documents", "blackmail", "threatening calls",
+]
+
 # PATH A/B/C — Earning / no money
 EARN_KEYWORDS = [
     "no money", "earn online", "side hustle", "freelance",
@@ -131,11 +140,12 @@ def detect_situation(user_input: str) -> DetectionResult:
     Priority order (hard-coded for safety):
         1. Mental health crisis  (PATH F)
         2. Debt / loan trap      (PATH D)
-        3. Betting / gambling    (PATH E)
-        4. Expense tracking      (PATH G)
-        5. Investment ready      (PATH H)
-        6. Earning / no money    (PATH A/B/C)
-        7. Unknown               (needs clarification)
+        3. Legal protection      (PATH I)
+        4. Betting / gambling    (PATH E)
+        5. Expense tracking      (PATH G)
+        6. Investment ready      (PATH H)
+        7. Earning / no money    (PATH A/B/C)
+        8. Unknown               (needs clarification)
 
     Args:
         user_input: Raw text from user (any language, transliterated OK)
@@ -179,6 +189,7 @@ def detect_situation(user_input: str) -> DetectionResult:
     # ── Score all other paths ─────────────────────────────────────────
     scores = {
         PATH_DEBT            : _score(text, DEBT_KEYWORDS),
+        PATH_LEGAL           : _score(text, LEGAL_KEYWORDS),
         PATH_BETTING         : _score(text, BETTING_KEYWORDS),
         PATH_EXPENSE         : _score(text, EXPENSE_KEYWORDS),
         PATH_INVEST          : _score(text, INVEST_KEYWORDS),
@@ -247,6 +258,10 @@ def _get_routing_message(path: str, needs_clarification: bool) -> str:
             "It sounds like you're dealing with a debt situation. "
             "You're not alone — let's find a way out together."
         ),
+        PATH_LEGAL: (
+            "This sounds like a legal or loan-protection issue. "
+            "I can help you understand your rights and the next steps to protect yourself."
+        ),
         PATH_BETTING: (
             "I noticed some mentions of betting or fantasy sports. "
             "Let me show you smarter ways to use that competitive energy."
@@ -280,6 +295,7 @@ def _get_clarification_question(path: str) -> str:
     """Return a single clarifying question when confidence is low."""
     questions = {
         PATH_DEBT            : "Are you currently struggling to repay a loan or EMI?",
+        PATH_LEGAL           : "Are you facing unfair loan terms, harassment, or hidden charges from a lender?",
         PATH_BETTING         : "Have you been spending money on fantasy sports or betting apps recently?",
         PATH_EXPENSE         : "Would you like to upload your bank statement to track your spending?",
         PATH_INVEST          : "Do you currently have savings set aside that you'd like to invest?",
@@ -338,6 +354,8 @@ if __name__ == "__main__":
         "I'm a student with no money, how do I earn online?",
         "Hello",
         "मेरे पास loan है और EMI नहीं भर पा रहा",
+        "Recovery agents are calling me and the loan app is threatening me",
+        "I have hidden charges in my loan agreement",
     ]
 
     print("=" * 60)

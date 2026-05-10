@@ -2,23 +2,17 @@
 import logging
 import os
 from datetime import datetime
+from io import BytesIO
 
-from fpdf import FPDF
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus.flowables import HRFlowable
 from analyzer import get_saving_tip
 
 logger = logging.getLogger(__name__)
-
-# ─── Helpers ─────────────────────────────────────────────────
-
-def _safe_text(text: str) -> str:
-    """
-    Strips any character Helvetica/latin-1 cannot encode.
-    Handles ₹, emoji, Devanagari, and all non-latin characters.
-    """
-    if not isinstance(text, str):
-        text = str(text)
-    return text.encode("latin-1", errors="ignore").decode("latin-1").strip()
-
 
 # ─── Multi-language Headers ───────────────────────────────────
 LANG_MAP = {
@@ -36,41 +30,6 @@ LANG_MAP = {
 }
 
 
-class FinancialReport(FPDF):
-
-    def header(self):
-        self.set_font("Helvetica", "B", 18)
-        self.set_text_color(34, 139, 34)
-        self.cell(
-            0, 15, "Youth Financial Guardian",
-            align="C", new_x="LMARGIN", new_y="NEXT",
-        )
-        self.set_font("Helvetica", "", 11)
-        self.set_text_color(100, 100, 100)
-        self.cell(
-            0, 8,
-            getattr(self, "report_title", "Your Personal Financial Report"),
-            align="C", new_x="LMARGIN", new_y="NEXT",
-        )
-        self.ln(3)
-        self.set_draw_color(34, 139, 34)
-        self.set_line_width(0.8)
-        self.line(10, self.get_y(), 200, self.get_y())
-        self.ln(5)
-
-    def footer(self):
-        self.set_y(-15)
-        self.set_font("Helvetica", "I", 8)
-        self.set_text_color(150, 150, 150)
-        gen_text = getattr(self, "footer_text", "Generated on")
-        self.cell(
-            0, 10,
-            f"{gen_text} {datetime.now().strftime('%d %B %Y')}"
-            f" | Made with love for young India",
-            align="C",
-        )
-
-
 def generate_report(
     name        : str,
     age         : int,
@@ -84,7 +43,7 @@ def generate_report(
     chart_paths : list = None,
 ) -> bytes:
     """
-    Generates a complete PDF financial report.
+    Generates a complete PDF financial report using ReportLab.
     Returns PDF as bytes for Streamlit download.
 
     Args:
@@ -97,127 +56,180 @@ def generate_report(
     if lang not in LANG_MAP:
         logger.warning(f"Language '{lang}' not in LANG_MAP — falling back to 'en'")
 
-    pdf = FinancialReport()
-    pdf.report_title = texts["title"]
-    pdf.footer_text  = texts["generated"]
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
+    # Create PDF buffer
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                          rightMargin=72, leftMargin=72,
+                          topMargin=72, bottomMargin=72)
 
-    # ── Profile ───────────────────────────────────────────────
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.set_text_color(0, 0, 0)
-    pdf.cell(0, 10, texts["profile"], new_x="LMARGIN", new_y="NEXT")
-    pdf.set_line_width(0.3)
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(3)
+    # Get styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        textColor=colors.darkgreen,
+        alignment=1,  # Center
+        spaceAfter=30
+    )
 
-    pdf.set_font("Helvetica", "", 12)
-    pdf.cell(0, 8, f"Name:           {_safe_text(name)}",  new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, f"Age:            {age} years",         new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, f"Monthly Income: Rs.{income:,}",       new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(4)
+    section_style = ParagraphStyle(
+        'SectionHeader',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=colors.black,
+        spaceAfter=10,
+        borderColor=colors.darkgreen,
+        borderWidth=1,
+        borderPadding=5
+    )
 
-    # ── Financial Health ──────────────────────────────────────
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.cell(0, 10, texts["health_score"], new_x="LMARGIN", new_y="NEXT")
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(3)
+    normal_style = styles['Normal']
+    bold_style = styles['Heading4']
 
-    pdf.set_font("Helvetica", "", 12)
-    pdf.cell(0, 8, f"{texts['status']}:       {_safe_text(crisis['level'])}",           new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, f"Total Income:   Rs.{result['total_income']:,}",                    new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, f"Total Expenses: Rs.{result['total_expenses']:,}",                  new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, f"Monthly Savings:Rs.{result['savings']:,}",                         new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, f"Savings Rate:   {result['savings_rate']}%",                        new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, f"Financial Health: {_safe_text(result['financial_health'])}",       new_x="LMARGIN", new_y="NEXT")
+    # Build the story (content flow)
+    story = []
 
-    for alert in crisis.get("alerts", []):
-        pdf.multi_cell(180, 8, f"  - {_safe_text(alert)}")
-    pdf.ln(4)
+    # Title
+    story.append(Paragraph("Youth Financial Guardian", title_style))
+    story.append(Paragraph(texts["title"], styles['Heading2']))
+    story.append(Spacer(1, 12))
 
-    # ── Expense Breakdown ─────────────────────────────────────
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.cell(0, 10, texts["path_summary"], new_x="LMARGIN", new_y="NEXT")
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(3)
+    # Profile Section
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.darkgreen))
+    story.append(Paragraph(texts["profile"], section_style))
 
-    pdf.set_font("Helvetica", "", 12)
+    profile_data = [
+        ["Name:", str(name)],
+        ["Age:", f"{age} years"],
+        ["Monthly Income:", f"Rs.{income:,.0f}"],
+    ]
+
+    profile_table = Table(profile_data, colWidths=[2*inch, 4*inch])
+    profile_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+    ]))
+    story.append(profile_table)
+    story.append(Spacer(1, 12))
+
+    # Financial Health Section
+    story.append(Paragraph(texts["health_score"], section_style))
+
+    health_data = [
+        [texts["status"] + ":", crisis.get('level', 'Unknown')],
+        ["Total Income:", f"Rs.{result['total_income']:,.0f}"],
+        ["Total Expenses:", f"Rs.{result['total_expenses']:,.0f}"],
+        ["Monthly Savings:", f"Rs.{result['savings']:,.0f}"],
+        ["Savings Rate:", f"{result['savings_rate']}%"],
+        ["Financial Health:", result['financial_health']],
+    ]
+
+    health_table = Table(health_data, colWidths=[2*inch, 4*inch])
+    health_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+    ]))
+    story.append(health_table)
+
+    # Crisis alerts
+    if crisis.get("alerts"):
+        story.append(Spacer(1, 6))
+        for alert in crisis["alerts"]:
+            story.append(Paragraph(f"• {alert}", normal_style))
+
+    story.append(Spacer(1, 12))
+
+    # Expense Breakdown Section
+    story.append(Paragraph(texts["path_summary"], section_style))
+
     if expenses:
+        expense_data = [["Category", "Amount", "Percentage"]]
+        total_expenses = result["total_expenses"]
         for category, amount in expenses.items():
-            percentage = (
-                round((amount / result["total_expenses"]) * 100, 1)
-                if result["total_expenses"] > 0 else 0
-            )
-            pdf.cell(
-                0, 8,
-                f"  {_safe_text(category)}: Rs.{amount:,} ({percentage}%)",
-                new_x="LMARGIN", new_y="NEXT",
-            )
+            percentage = round((amount / total_expenses) * 100, 1) if total_expenses > 0 else 0
+            expense_data.append([category, f"Rs.{amount:,.0f}", f"{percentage}%"])
+
+        expense_table = Table(expense_data, colWidths=[2.5*inch, 2*inch, 1.5*inch])
+        expense_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ]))
+        story.append(expense_table)
     else:
-        pdf.cell(0, 8, "  No expenses recorded.", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(4)
+        story.append(Paragraph("No expenses recorded.", normal_style))
 
-    # ── Charts ────────────────────────────────────────────────
+    story.append(Spacer(1, 12))
+
+    # Charts Section (if provided)
     if chart_paths is not None:
-        pdf.set_font("Helvetica", "B", 14)
-        pdf.cell(0, 10, texts["charts"], new_x="LMARGIN", new_y="NEXT")
-        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-        pdf.ln(3)
+        story.append(Paragraph(texts["charts"], section_style))
         if chart_paths:
-            for chart in chart_paths:
-                if os.path.exists(chart):
-                    pdf.image(chart, x=10, w=190)
-                    pdf.ln(5)
+            for chart_path in chart_paths:
+                if os.path.exists(chart_path):
+                    from reportlab.platypus import Image
+                    img = Image(chart_path, width=6*inch, height=4*inch)
+                    story.append(img)
+                    story.append(Spacer(1, 12))
         else:
-            pdf.set_font("Helvetica", "I", 11)
-            pdf.cell(
-                0, 8, "  No charts available.",
-                new_x="LMARGIN", new_y="NEXT",
-            )
-        pdf.ln(4)
+            story.append(Paragraph("No charts available.", styles['Italic']))
+        story.append(Spacer(1, 12))
 
-    # ── Government Schemes ────────────────────────────────────
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.cell(0, 10, texts["schemes"], new_x="LMARGIN", new_y="NEXT")
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(3)
+    # Government Schemes Section
+    story.append(Paragraph(texts["schemes"], section_style))
 
     if schemes:
         for scheme in schemes:
-            pdf.set_font("Helvetica", "B", 12)
-            pdf.multi_cell(180, 8, f"  {_safe_text(scheme['name'])}")
-            pdf.set_font("Helvetica", "", 11)
-            pdf.multi_cell(180, 7, f"    Benefit: {_safe_text(scheme['benefit'])}")
-            pdf.ln(2)
+            story.append(Paragraph(f"<b>{scheme['name']}</b>", bold_style))
+            story.append(Paragraph(f"Benefit: {scheme['benefit']}", normal_style))
+            story.append(Spacer(1, 6))
     else:
-        pdf.set_font("Helvetica", "", 12)
-        pdf.cell(0, 8, "  No schemes matched your profile.", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(4)
+        story.append(Paragraph("No schemes matched your profile.", normal_style))
 
-    # ── Action Plan ───────────────────────────────────────────
-    pdf.set_font("Helvetica", "B", 14)
-    pdf.cell(0, 10, texts["action_plan"], new_x="LMARGIN", new_y="NEXT")
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(3)
+    story.append(Spacer(1, 12))
+
+    # Action Plan Section
+    story.append(Paragraph(texts["action_plan"], section_style))
 
     if action_plan:
         for step in action_plan:
-            pdf.set_font("Helvetica", "B", 12)
-            pdf.multi_cell(180, 8, f"  {_safe_text(step['title'])}")
-            pdf.set_font("Helvetica", "", 11)
-            pdf.multi_cell(180, 7, f"    {_safe_text(step['description'])}")
-            pdf.ln(2)
+            story.append(Paragraph(f"<b>{step['title']}</b>", bold_style))
+            story.append(Paragraph(step['description'], normal_style))
+            story.append(Spacer(1, 6))
     else:
-        pdf.set_font("Helvetica", "", 12)
-        pdf.cell(0, 8, "  No action steps available.", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(4)
+        story.append(Paragraph("No action steps available.", normal_style))
 
-    # ── Personalised Tip ──────────────────────────────────────
+    story.append(Spacer(1, 12))
+
+    # Personalized Tip
     tip = get_saving_tip(result["savings_rate"])
-    pdf.set_font("Helvetica", "I", 12)
-    pdf.multi_cell(180, 8, f"Tip: {_safe_text(tip)}")
+    story.append(Paragraph(f"<i>Tip: {tip}</i>", styles['Italic']))
 
-    return bytes(pdf.output())
+    # Footer
+    story.append(Spacer(1, 24))
+    footer_text = f"{texts['generated']} {datetime.now().strftime('%d %B %Y')} | Made with love for young India"
+    story.append(Paragraph(footer_text, styles['Italic']))
+
+    # Build PDF
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.getvalue()
 
 
 # ─── Standalone Test ──────────────────────────────────────────
