@@ -4,7 +4,7 @@ import { authApi } from '../api/auth'
 import { getInitials } from '../lib/utils'
 import toast from 'react-hot-toast'
 import {
-  LayoutDashboard, Users, BarChart2, Settings, LogOut, Menu, ScrollText
+  LayoutDashboard, Users, BarChart2, Settings, LogOut, Menu, ScrollText, ShieldAlert
 } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/admin',           icon: LayoutDashboard, label: 'Dashboard'  },
   { to: '/admin/users',     icon: Users,           label: 'Users'      },
   { to: '/admin/analytics', icon: BarChart2,       label: 'Analytics'  },
+  { to: '/admin/crisis',    icon: ShieldAlert,     label: 'Crisis'     },
   { to: '/admin/logs',      icon: ScrollText,      label: 'Audit Logs' },
   { to: '/admin/settings',  icon: Settings,        label: 'Settings'   },
 ]

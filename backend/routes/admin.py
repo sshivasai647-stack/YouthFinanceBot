@@ -399,6 +399,205 @@ def analytics_export():
     )
 
 
+# ── Crisis Flags ─────────────────────────────────────────────────────────────
+
+# Severity order for sorting (higher = more urgent)
+_SEVERITY_RANK = {
+    "suicidal":      4,
+    "shame_despair": 3,
+    "crisis":        3,
+    "at_risk":       2,
+    "mild":          1,
+    "stable":        0,
+}
+
+
+@admin_bp.get("/crisis")
+@role_required("admin")
+def crisis_list():
+    db  = get_db()
+    page  = max(int(request.args.get("page", "1")), 1)
+    limit = min(max(int(request.args.get("limit", "50")), 1), 200)
+    skip  = (page - 1) * limit
+
+    q: dict[str, Any] = {"flagged": True}
+
+    level = (request.args.get("level") or "").strip()
+    if level and level != "all":
+        q["crisis_level"] = level
+
+    status = request.args.get("status", "all")
+    if status == "escalated":
+        q["escalated"] = True
+    elif status == "open":
+        q["escalated"] = {"$ne": True}
+
+    date_from = request.args.get("date_from")
+    date_to   = request.args.get("date_to")
+    if date_from or date_to:
+        ts_filter: dict[str, Any] = {}
+        if date_from:
+            try:
+                ts_filter["$gte"] = datetime.fromisoformat(date_from).replace(tzinfo=timezone.utc)
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                ts_filter["$lte"] = datetime.fromisoformat(date_to).replace(tzinfo=timezone.utc)
+            except ValueError:
+                pass
+        if ts_filter:
+            q["created_at"] = ts_filter
+
+    total = db.mental_health_logs.count_documents(q)
+
+    pipeline = [
+        {"$match": q},
+        {"$sort": {"created_at": -1}},
+        {"$skip": skip},
+        {"$limit": limit},
+        {
+            "$lookup": {
+                "from":         "users",
+                "localField":   "user_id",
+                "foreignField": "_id",
+                "as":           "_user",
+            }
+        },
+        {"$unwind": {"path": "$_user", "preserveNullAndEmpty": True}},
+    ]
+    raw = list(db.mental_health_logs.aggregate(pipeline))
+
+    entries = []
+    for doc in raw:
+        u = doc.get("_user") or {}
+        entries.append({
+            "id":            str(doc["_id"]),
+            "user_id":       str(doc.get("user_id", "")),
+            "user_name":     u.get("full_name", "Unknown"),
+            "user_email":    u.get("email", ""),
+            "crisis_level":  doc.get("crisis_level", "unknown"),
+            "flagged":       doc.get("flagged", False),
+            "escalated":     doc.get("escalated", False),
+            "escalated_at":  doc.get("escalated_at"),
+            "escalated_by":  doc.get("escalated_by", ""),
+            "note":          doc.get("note", ""),
+            "created_at":    doc.get("created_at"),
+        })
+
+    # Summary counts
+    summary = {
+        "total_flagged":  db.mental_health_logs.count_documents({"flagged": True}),
+        "suicidal":       db.mental_health_logs.count_documents({"crisis_level": "suicidal"}),
+        "open":           db.mental_health_logs.count_documents({"flagged": True, "escalated": {"$ne": True}}),
+        "escalated":      db.mental_health_logs.count_documents({"flagged": True, "escalated": True}),
+        "last_24h":       db.mental_health_logs.count_documents({
+            "flagged": True,
+            "created_at": {"$gte": _utc_now() - timedelta(hours=24)},
+        }),
+    }
+    all_levels = db.mental_health_logs.distinct("crisis_level", {"flagged": True})
+
+    return jsonify({
+        "total":      total,
+        "page":       page,
+        "pages":      max(1, -(-total // limit)),
+        "entries":    to_jsonable(entries),
+        "summary":    summary,
+        "all_levels": sorted(all_levels),
+    }), 200
+
+
+class EscalateSchema(Schema):
+    note = fields.Str(required=False, load_default="", validate=validate.Length(max=500))
+
+
+@admin_bp.patch("/crisis/<entry_id>/escalate")
+@role_required("admin")
+def crisis_escalate(entry_id: str):
+    try:
+        oid = ObjectId(entry_id)
+    except (InvalidId, Exception):
+        return jsonify({"error": "Invalid ID"}), 400
+
+    try:
+        body = EscalateSchema().load(request.get_json() or {})
+    except ValidationError as err:
+        return jsonify({"error": "Validation failed", "details": err.messages}), 400
+
+    db  = get_db()
+    doc = db.mental_health_logs.find_one({"_id": oid})
+    if not doc:
+        return jsonify({"error": "Not found"}), 404
+
+    now      = _utc_now()
+    admin_id = str(_admin_oid())
+
+    db.mental_health_logs.update_one(
+        {"_id": oid},
+        {"$set": {
+            "escalated":    True,
+            "escalated_at": now,
+            "escalated_by": admin_id,
+            "note":         body["note"],
+        }},
+    )
+
+    # Notify the affected user
+    user_id = doc.get("user_id")
+    if user_id:
+        email = get_user_email(db.users, user_id)
+        notify_user(
+            db.notifications,
+            user_id=user_id,
+            notif_type="crisis_escalated",
+            message="A counsellor has been alerted and will reach out to you shortly. You are not alone.",
+            send_email=True,
+            email_subject="YouthFinanceBot — Counsellor support on the way",
+            recipient_email=email,
+            dedup_key=f"crisis_escalated:{entry_id}",
+            dedup_hours=24,
+        )
+
+    db.audit_logs.insert_one({
+        "user_id":   admin_id,
+        "action":    "crisis_escalate",
+        "endpoint":  f"/api/admin/crisis/{entry_id}/escalate",
+        "ip":        request.remote_addr,
+        "timestamp": now,
+        "changes":   ["escalated", "note"],
+    })
+
+    return jsonify({"message": "Escalated and user notified"}), 200
+
+
+@admin_bp.delete("/crisis/<entry_id>/escalate")
+@role_required("admin")
+def crisis_deescalate(entry_id: str):
+    """Undo an escalation (mark as re-opened / false-positive)."""
+    try:
+        oid = ObjectId(entry_id)
+    except (InvalidId, Exception):
+        return jsonify({"error": "Invalid ID"}), 400
+
+    db = get_db()
+    result = db.mental_health_logs.update_one(
+        {"_id": oid},
+        {"$set": {"escalated": False}, "$unset": {"escalated_at": "", "escalated_by": "", "note": ""}},
+    )
+    if result.matched_count == 0:
+        return jsonify({"error": "Not found"}), 404
+
+    db.audit_logs.insert_one({
+        "user_id":   str(_admin_oid()),
+        "action":    "crisis_reopen",
+        "endpoint":  f"/api/admin/crisis/{entry_id}/escalate",
+        "ip":        request.remote_addr,
+        "timestamp": _utc_now(),
+    })
+    return jsonify({"message": "Re-opened"}), 200
+
+
 # ── Platform Settings ─────────────────────────────────────────────────────────
 
 SETTINGS_DOC_ID = "platform"
