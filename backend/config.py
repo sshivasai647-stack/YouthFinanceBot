@@ -21,7 +21,7 @@ class Config:
     MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/youth_finance_bot")
     MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "youth_finance_bot")
 
-    FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
+    FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5000")
 
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-jwt-secret")
     JWT_TOKEN_LOCATION = ["cookies"]
