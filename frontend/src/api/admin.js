@@ -15,4 +15,6 @@ export const adminApi = {
   aiUsage:         () => api.get('/analytics/ai-usage'),
   auditLogs:       (params) => api.get('/logs', { params }),
   exportExcel:     () => api.get('/analytics/export', { responseType: 'blob' }),
+  settings:        () => api.get('/settings'),
+  updateSettings:  (payload) => api.put('/settings', payload),
 }

@@ -11,6 +11,7 @@ import AdminLayout       from './layouts/AdminLayout'
 import AdminDashboard      from './pages/admin/AdminDashboard'
 import AdminUsersPage      from './pages/admin/AdminUsersPage'
 import AdminAnalyticsPage  from './pages/admin/AdminAnalyticsPage'
+import AdminSettingsPage   from './pages/admin/AdminSettingsPage'
 
 // Public pages
 import LandingPage    from './pages/public/LandingPage'
@@ -93,7 +94,7 @@ export default function App() {
         <Route index              element={<AdminDashboard />} />
         <Route path="users"       element={<AdminUsersPage />}                                        />
         <Route path="analytics"   element={<AdminAnalyticsPage />}                                   />
-        <Route path="settings"    element={<div className="p-6">Settings — Coming Soon</div>}       />
+        <Route path="settings"    element={<AdminSettingsPage />}                                    />
       </Route>
 
       {/* ── Fallback ── */}

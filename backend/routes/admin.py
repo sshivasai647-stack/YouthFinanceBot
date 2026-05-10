@@ -360,3 +360,107 @@ def analytics_export():
         as_attachment=True,
         download_name="youthfinancebot_analytics.xlsx",
     )
+
+
+# ── Platform Settings ─────────────────────────────────────────────────────────
+
+SETTINGS_DOC_ID = "platform"
+
+SETTINGS_DEFAULTS: dict[str, Any] = {
+    "platform_name":       "YouthFinanceBot",
+    "otp_exp_minutes":     10,
+    "reset_exp_minutes":   30,
+    "max_guest_messages":  200,
+    "guest_chat_enabled":  True,
+    "maintenance_mode":    False,
+    "support_email":       "support@youthfinancebot.local",
+    "crisis_alert_email":  "",
+    "min_password_length": 8,
+    "max_login_attempts":  5,
+    "session_timeout_min": 15,
+}
+
+_SETTINGS_SCHEMA_TYPES: dict[str, type] = {
+    "platform_name":       str,
+    "otp_exp_minutes":     int,
+    "reset_exp_minutes":   int,
+    "max_guest_messages":  int,
+    "guest_chat_enabled":  bool,
+    "maintenance_mode":    bool,
+    "support_email":       str,
+    "crisis_alert_email":  str,
+    "min_password_length": int,
+    "max_login_attempts":  int,
+    "session_timeout_min": int,
+}
+
+
+def get_platform_settings(db) -> dict[str, Any]:
+    """Return merged settings: DB overrides then defaults."""
+    doc = db.platform_settings.find_one({"_id": SETTINGS_DOC_ID}) or {}
+    return {key: doc.get(key, default) for key, default in SETTINGS_DEFAULTS.items()}
+
+
+@admin_bp.get("/settings")
+@role_required("admin")
+def read_settings():
+    db = get_db()
+    settings = get_platform_settings(db)
+    # Also expose read-only env info
+    import os
+    env_info = {
+        "flask_env":      os.getenv("FLASK_ENV", "development"),
+        "debug_mode":     os.getenv("FLASK_ENV", "development") != "production",
+        "mongo_uri_safe": _mask_uri(os.getenv("MONGO_URI", "mongodb://localhost:27017/youth_finance_bot")),
+        "mail_sender":    os.getenv("MAIL_DEFAULT_SENDER", "noreply@youthfinancebot.local"),
+        "hcaptcha_set":   bool(os.getenv("HCAPTCHA_SECRET", "").strip()),
+        "groq_key_set":   bool(os.getenv("GROQ_API_KEY", "").strip()),
+    }
+    return jsonify({"settings": settings, "env_info": env_info}), 200
+
+
+def _mask_uri(uri: str) -> str:
+    """Hide password in a MongoDB URI for safe display."""
+    import re
+    return re.sub(r"://([^:@]+):([^@]+)@", r"://\1:****@", uri)
+
+
+class UpdateSettingsSchema(Schema):
+    platform_name       = fields.Str(required=False, validate=validate.Length(min=1, max=80))
+    otp_exp_minutes     = fields.Int(required=False, validate=validate.Range(min=1, max=60))
+    reset_exp_minutes   = fields.Int(required=False, validate=validate.Range(min=5, max=1440))
+    max_guest_messages  = fields.Int(required=False, validate=validate.Range(min=10, max=1000))
+    guest_chat_enabled  = fields.Bool(required=False)
+    maintenance_mode    = fields.Bool(required=False)
+    support_email       = fields.Email(required=False, allow_none=True)
+    crisis_alert_email  = fields.Str(required=False)
+    min_password_length = fields.Int(required=False, validate=validate.Range(min=6, max=32))
+    max_login_attempts  = fields.Int(required=False, validate=validate.Range(min=1, max=20))
+    session_timeout_min = fields.Int(required=False, validate=validate.Range(min=5, max=1440))
+
+
+@admin_bp.put("/settings")
+@role_required("admin")
+def update_settings():
+    try:
+        payload = UpdateSettingsSchema().load(request.get_json() or {})
+    except ValidationError as err:
+        return jsonify({"error": "Validation failed", "details": err.messages}), 400
+    if not payload:
+        return jsonify({"error": "No valid fields provided"}), 400
+
+    db = get_db()
+    db.platform_settings.update_one(
+        {"_id": SETTINGS_DOC_ID},
+        {"$set": {**payload, "updated_at": _utc_now(), "updated_by": str(_admin_oid())}},
+        upsert=True,
+    )
+    db.audit_logs.insert_one({
+        "user_id":   str(_admin_oid()),
+        "action":    "update_settings",
+        "endpoint":  "/api/admin/settings",
+        "ip":        request.remote_addr,
+        "timestamp": _utc_now(),
+        "changes":   list(payload.keys()),
+    })
+    return jsonify({"message": "Settings updated", "updated": list(payload.keys())}), 200
