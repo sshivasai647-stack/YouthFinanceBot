@@ -12,6 +12,7 @@ import AdminDashboard      from './pages/admin/AdminDashboard'
 import AdminUsersPage      from './pages/admin/AdminUsersPage'
 import AdminAnalyticsPage  from './pages/admin/AdminAnalyticsPage'
 import AdminSettingsPage   from './pages/admin/AdminSettingsPage'
+import AdminAuditLogsPage  from './pages/admin/AdminAuditLogsPage'
 
 // Public pages
 import LandingPage    from './pages/public/LandingPage'
@@ -94,6 +95,7 @@ export default function App() {
         <Route index              element={<AdminDashboard />} />
         <Route path="users"       element={<AdminUsersPage />}                                        />
         <Route path="analytics"   element={<AdminAnalyticsPage />}                                   />
+        <Route path="logs"        element={<AdminAuditLogsPage />}                                   />
         <Route path="settings"    element={<AdminSettingsPage />}                                    />
       </Route>
 

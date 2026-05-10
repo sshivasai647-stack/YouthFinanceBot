@@ -292,27 +292,64 @@ def analytics_ai_usage():
 @role_required("admin")
 def audit_logs_list():
     db = get_db()
-    page = max(int(request.args.get("page", "1")), 1)
+    page  = max(int(request.args.get("page",  "1")),   1)
     limit = min(max(int(request.args.get("limit", "50")), 1), 200)
-    skip = (page - 1) * limit
+    skip  = (page - 1) * limit
+
     q: dict[str, Any] = {}
-    ep = request.args.get("endpoint_prefix")
-    if ep:
-        q["endpoint"] = {"$regex": ep}
+
+    # Free-text search across endpoint + action
+    search = (request.args.get("search") or "").strip()
+    if search:
+        pattern = {"$regex": search, "$options": "i"}
+        q["$or"] = [{"endpoint": pattern}, {"action": pattern}, {"user_id": pattern}, {"ip": pattern}]
+
+    # Exact action filter
+    action = (request.args.get("action") or "").strip()
+    if action and action != "all":
+        q["action"] = action
+
+    # Date range filters
+    date_from = request.args.get("date_from")
+    date_to   = request.args.get("date_to")
+    if date_from or date_to:
+        ts_filter: dict[str, Any] = {}
+        if date_from:
+            try:
+                ts_filter["$gte"] = datetime.fromisoformat(date_from).replace(tzinfo=timezone.utc)
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                ts_filter["$lte"] = datetime.fromisoformat(date_to).replace(tzinfo=timezone.utc)
+            except ValueError:
+                pass
+        if ts_filter:
+            q["timestamp"] = ts_filter
+
     total = db.audit_logs.count_documents(q)
     entries = []
     for doc in db.audit_logs.find(q).sort("timestamp", -1).skip(skip).limit(limit):
-        entries.append(
-            {
-                "id": str(doc["_id"]),
-                "user_id": doc.get("user_id"),
-                "action": doc.get("action"),
-                "endpoint": doc.get("endpoint"),
-                "ip": doc.get("ip"),
-                "timestamp": doc.get("timestamp"),
-            }
-        )
-    return jsonify({"total": total, "page": page, "logs": to_jsonable(entries)}), 200
+        entries.append({
+            "id":        str(doc["_id"]),
+            "user_id":   doc.get("user_id", ""),
+            "action":    doc.get("action", ""),
+            "endpoint":  doc.get("endpoint", ""),
+            "ip":        doc.get("ip", ""),
+            "timestamp": doc.get("timestamp"),
+            "changes":   doc.get("changes", []),
+        })
+
+    # Distinct action values for filter dropdown (capped at 100)
+    all_actions = db.audit_logs.distinct("action")
+
+    return jsonify({
+        "total":       total,
+        "page":        page,
+        "pages":       max(1, -(-total // limit)),  # ceiling div
+        "logs":        to_jsonable(entries),
+        "all_actions": sorted(all_actions),
+    }), 200
 
 
 @admin_bp.get("/analytics/export")
