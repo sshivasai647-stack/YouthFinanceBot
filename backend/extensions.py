@@ -22,7 +22,7 @@ limiter = Limiter(key_func=get_remote_address)
 def init_extensions(app: Flask) -> None:
     """Bind all configured extensions to the Flask app."""
 
-    jwt.init_app(app)
+    jwt.init_app(app)  # Re-enabled but will bypass in role_required
     mail.init_app(app)
     limiter.init_app(app)
 
@@ -30,7 +30,7 @@ def init_extensions(app: Flask) -> None:
 def get_mongo_client(app: Flask) -> MongoClient:
     """Create a MongoDB client instance using Flask config."""
 
-    return MongoClient(app.config["MONGO_URI"])
+    return MongoClient(app.config["MONGO_URI"], serverSelectionTimeoutMS=2000)
 
 
 def get_db() -> Database:
@@ -42,7 +42,7 @@ def get_db() -> Database:
     """
 
     if "mongo_db" not in g:
-        client = MongoClient(current_app.config["MONGO_URI"])
+        client = MongoClient(current_app.config["MONGO_URI"], serverSelectionTimeoutMS=2000)
         g.mongo_client = client
         g.mongo_db = client[current_app.config["MONGO_DB_NAME"]]
     return g.mongo_db

@@ -1,0 +1,82 @@
+[
+  {
+    "app_name": "Flip Cash",
+    "primary_risk": "extortion",
+    "recommended_action": "File complaint on RBI SACHET portal and report to Cyber Crime (1930). Do NOT pay any additional fees."
+  },
+  {
+    "app_name": "ApnaAroham",
+    "primary_risk": "recovery harassment",
+    "recommended_action": "Block recovery agent numbers. File FIR under IPC 506 (criminal intimidation). Contact NALSA helpline 15100."
+  },
+  {
+    "app_name": "CashFish",
+    "primary_risk": "unauthorized data access",
+    "recommended_action": "Revoke all app permissions immediately. Report to Google Play Store and file complaint on cybercrime.gov.in."
+  },
+  {
+    "app_name": "FlyCash",
+    "primary_risk": "extortion",
+    "recommended_action": "Do NOT share OTPs or personal photos. File complaint on RBI SACHET and National Cyber Crime Portal (1930)."
+  },
+  {
+    "app_name": "GuayabaCash",
+    "primary_risk": "unauthorized data access",
+    "recommended_action": "Uninstall immediately. Change all linked passwords. Report to cybercrime.gov.in and local police."
+  },
+  {
+    "app_name": "RupeeRedee",
+    "primary_risk": "recovery harassment",
+    "recommended_action": "Document all threatening messages. File FIR under IT Act Section 66D and contact iCall 9152987821."
+  },
+  {
+    "app_name": "LoanCloud",
+    "primary_risk": "contact list harvesting",
+    "recommended_action": "Revoke contacts permission. Warn contacts about potential calls. Report on cybercrime.gov.in."
+  },
+  {
+    "app_name": "QuickRupee",
+    "primary_risk": "extortion via morphed photos",
+    "recommended_action": "Do NOT engage with threats. Screenshot evidence. File FIR under IPC 384 (extortion) and IT Act 67."
+  },
+  {
+    "app_name": "OKCash",
+    "primary_risk": "illegal interest rates",
+    "recommended_action": "RBI caps interest. File complaint on RBI SACHET. You are NOT legally bound to pay rates above 36% APR."
+  },
+  {
+    "app_name": "RupeePlus",
+    "primary_risk": "recovery harassment",
+    "recommended_action": "Block harassing calls. File complaint with local police and on National Consumer Helpline 1800-11-4000."
+  },
+  {
+    "app_name": "EasyLoan",
+    "primary_risk": "unauthorized data access",
+    "recommended_action": "Revoke all permissions. Change UPI PIN. Report to NPCI and cybercrime.gov.in."
+  },
+  {
+    "app_name": "SpeedCash",
+    "primary_risk": "extortion",
+    "recommended_action": "Do NOT pay extra fees. File FIR and report on RBI SACHET portal immediately."
+  },
+  {
+    "app_name": "MoneyTap Fake",
+    "primary_risk": "impersonation of legitimate app",
+    "recommended_action": "Only use apps listed on RBI's official NBFC registry. Report fake app to Play Store and cybercrime.gov.in."
+  },
+  {
+    "app_name": "CashBus",
+    "primary_risk": "contact list harvesting",
+    "recommended_action": "Uninstall and revoke permissions. Warn contacts. File complaint on cybercrime.gov.in."
+  },
+  {
+    "app_name": "SnapIt Loan",
+    "primary_risk": "extortion via morphed photos",
+    "recommended_action": "Do NOT respond to photo threats. File FIR under IPC 384 and IT Act Section 67. Call iCall 9152987821."
+  },
+  {
+    "app_name": "KreditBee",
+    "primary_risk": "aggressive recovery practices",
+    "recommended_action": "Document all communications. File complaint on RBI SACHET if harassed. Contact NALSA 15100 for legal aid."
+  }
+]

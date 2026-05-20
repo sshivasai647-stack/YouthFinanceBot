@@ -1,18 +1,45 @@
 # crisis_detector.py
 # Purpose: Multi-signal crisis assessment for financial and mental health distress
+# Enhanced: Predatory Loan Blacklist, Behavioral Loop Detection, Temporal Risk Check
 
 import logging
+import json
+import os
+from datetime import datetime
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-# ─── Escalation Tiers ────────────────────────────────────────
-# Ordinal for merging: higher = more severe
-_LEVEL_ORDER = {"Low Risk": 0, "Medium Risk": 1, "Immediate Crisis": 2}
+# ─── Escalation Tiers (4-tier system) ────────────────────────
+# Normal → Watch → Alert → Emergency
+_LEVEL_ORDER = {
+    "Normal": 0, "Watch": 1, "Alert": 2, "Emergency": 3,
+    # Backward compat aliases
+    "Low Risk": 0, "Medium Risk": 1, "Immediate Crisis": 3,
+}
+
+# Canonical tier names for new code
+TIER_NORMAL = "Normal"
+TIER_WATCH = "Watch"
+TIER_ALERT = "Alert"
+TIER_EMERGENCY = "Emergency"
 
 
 def _merge_level(a: str, b: str) -> str:
-    return a if _LEVEL_ORDER[a] >= _LEVEL_ORDER[b] else b
+    return a if _LEVEL_ORDER.get(a, 0) >= _LEVEL_ORDER.get(b, 0) else b
+
+
+# ─── Load Predatory Loan Blacklist ────────────────────────────
+_BLACKLIST_PATH = os.path.join(os.path.dirname(__file__), "data", "loan_blacklist.json")
+_LOAN_BLACKLIST: List[Dict] = []
+try:
+    with open(_BLACKLIST_PATH, "r", encoding="utf-8") as f:
+        _LOAN_BLACKLIST = json.load(f)
+    logger.info(f"Loaded {len(_LOAN_BLACKLIST)} predatory loan entries from blacklist.")
+except FileNotFoundError:
+    logger.warning(f"loan_blacklist.json not found at {_BLACKLIST_PATH}")
+except Exception as e:
+    logger.warning(f"Failed to load loan blacklist: {e}")
 
 
 def _normalize_text(text: Optional[str]) -> str:
@@ -247,6 +274,130 @@ def _evaluate_financial(
     return level, signals, savings, savings_rate
 
 
+# ─── Desperation Keywords ─────────────────────────────────────
+_DESPERATION_KEYWORDS = (
+    "threats", "threatening", "contacts calling", "blackmail",
+    "morphed photos", "betting loss", "gambling loss", "hopeless",
+    "harassment", "agents calling", "calling my family", "calling my contacts",
+    "sharing my photos", "defaming me", "nude photos", "leaked photos",
+)
+
+# ─── NEW: Predatory Loan Blacklist Scanner ────────────────────
+def _check_blacklist_and_desperation(text_norm: str) -> Tuple[str, List[str], List[Dict]]:
+    """Scan text against loan_blacklist.json and desperation keywords."""
+    level = TIER_NORMAL
+    hits: List[str] = []
+    matched_apps: List[Dict] = []
+
+    # Check against blacklist
+    for entry in _LOAN_BLACKLIST:
+        app_lower = entry["app_name"].casefold()
+        if app_lower in text_norm:
+            level = _merge_level(level, TIER_ALERT)
+            hits.append(f"blacklist:app_match:{entry['app_name']}")
+            matched_apps.append(entry)
+
+    # Check desperation keywords
+    desp_count = 0
+    for kw in _DESPERATION_KEYWORDS:
+        if kw in text_norm:
+            desp_count += 1
+            hits.append(f"desperation:{kw}")
+
+    if desp_count >= 2:
+        level = _merge_level(level, TIER_EMERGENCY)
+    elif desp_count >= 1:
+        level = _merge_level(level, TIER_ALERT)
+
+    # Blacklist + desperation combo → Emergency
+    if matched_apps and desp_count >= 1:
+        level = _merge_level(level, TIER_EMERGENCY)
+        hits.append("combo:blacklist_app_with_desperation")
+
+    return level, hits, matched_apps
+
+
+# ─── NEW: Behavioral Debt-Loop Parser ────────────────────────
+_LOOP_PHRASES = (
+    "took a loan to pay a loan",
+    "new loan to clear old loan",
+    "borrowing to repay",
+    "loan to pay loan",
+    "one loan to pay another",
+    "another loan to cover",
+    "borrowed to pay back",
+    "taking loan to pay emi",
+    "loan se loan",
+    "ek loan doosra loan",
+    "naya loan purana loan",
+    "loan cycle",
+    "debt cycle",
+    "debt trap",
+    "loan pe loan",
+    "loan par loan",
+)
+
+def _check_behavioral_loop(text_norm: str) -> Tuple[str, List[str]]:
+    """Detect debt-cycling behavior from user text."""
+    level = TIER_NORMAL
+    hits: List[str] = []
+
+    for phrase in _LOOP_PHRASES:
+        if phrase in text_norm:
+            level = _merge_level(level, TIER_ALERT)
+            hits.append(f"loop:{phrase}")
+
+    # Multiple loop phrases → Emergency
+    if len(hits) >= 2:
+        level = _merge_level(level, TIER_EMERGENCY)
+        hits.append("loop:multiple_debt_cycle_indicators")
+
+    return level, hits
+
+
+# ─── NEW: Temporal Risk Check ─────────────────────────────────
+_PANIC_GAMBLING_KEYWORDS = (
+    "panic", "panicking", "scared", "terrified", "can't sleep",
+    "gambling", "betting", "lost money", "lost everything",
+    "dream11", "fantasy app", "satta", "matka", "casino",
+    "what do i do", "help me", "kya karu", "dar lag raha",
+)
+
+def _check_temporal(text_norm: str, timestamp: Optional[datetime] = None) -> Tuple[str, List[str]]:
+    """Flag late-night (11 PM - 3 AM) panic or gambling interactions."""
+    now = timestamp or datetime.now()
+    hour = now.hour
+    is_high_risk_hour = (hour >= 23 or hour < 3)
+
+    level = TIER_NORMAL
+    hits: List[str] = []
+
+    if not is_high_risk_hour:
+        return level, hits
+
+    for kw in _PANIC_GAMBLING_KEYWORDS:
+        if kw in text_norm:
+            hits.append(f"temporal:late_night:{kw}")
+
+    if len(hits) >= 2:
+        level = _merge_level(level, TIER_EMERGENCY)
+        hits.append("temporal:high_risk_hour_with_multiple_panic_keywords")
+    elif len(hits) >= 1:
+        level = _merge_level(level, TIER_ALERT)
+        hits.append("temporal:high_risk_hour_with_panic_keyword")
+
+    return level, hits
+
+
+# ─── Crisis Hotlines (Emergency tier) ─────────────────────────
+_CRISIS_HOTLINES = [
+    {"name": "iCall", "number": "9152987821", "hours": "Mon-Sat 8AM-10PM"},
+    {"name": "Vandrevala Foundation", "number": "1860-2662-345", "hours": "24x7"},
+    {"name": "AASRA", "number": "9820466726", "hours": "24x7"},
+    {"name": "National Cyber Crime", "number": "1930", "hours": "24x7"},
+    {"name": "NALSA Legal Aid", "number": "15100", "hours": "24x7"},
+]
+
 # ─── Public API ───────────────────────────────────────────────
 def detect_crisis(
     income             : float,
@@ -254,50 +405,59 @@ def detect_crisis(
     debt               : float = 0,
     text               : Optional[str] = None,
     behavioral_signals : Optional[Mapping[str, Any]] = None,
+    timestamp          : Optional[datetime] = None,
 ) -> Dict:
     """
-    Multi-signal crisis assessment: financial, keyword, and behavioral.
-    Defaults keep legacy financial-only usage safe when text/behavior omitted.
+    Multi-signal crisis assessment: financial, keyword, behavioral,
+    predatory loan blacklist, debt-loop detection, and temporal risk.
 
     Returns:
-        dict with keys: level, alerts, savings, savings_rate, signals
+        dict with keys: level, alerts, savings, savings_rate, signals,
+                        hotlines (on Emergency), matched_apps (if any)
     """
+    text_norm = _normalize_text(text)
+
+    # Legacy evaluators
     fin_level,  fin_signals, savings, savings_rate = _evaluate_financial(
         income, expenses, debt
     )
-    kw_level,  kw_hits  = _scan_keywords(_normalize_text(text))
+    kw_level,  kw_hits  = _scan_keywords(text_norm)
     beh_level, beh_hits = _evaluate_behavioral(behavioral_signals)
 
-    # Merge all three domains
-    combined = "Low Risk"
-    for part in (fin_level, kw_level, beh_level):
+    # NEW scanners
+    bl_level, bl_hits, matched_apps = _check_blacklist_and_desperation(text_norm)
+    loop_level, loop_hits = _check_behavioral_loop(text_norm)
+    temp_level, temp_hits = _check_temporal(text_norm, timestamp)
+
+    # Merge all six domains
+    combined = TIER_NORMAL
+    for part in (fin_level, kw_level, beh_level, bl_level, loop_level, temp_level):
         combined = _merge_level(combined, part)
 
-    # Cross-signal escalation: medium in 2+ domains → Immediate (sensitivity-first)
-    domains_at_medium_or_worse = sum(
-        1 for lbl in (fin_level, kw_level, beh_level)
-        if _LEVEL_ORDER[lbl] >= _LEVEL_ORDER["Medium Risk"]
+    # Cross-signal escalation: 2+ domains at Watch or worse → Emergency
+    domains_at_watch_or_worse = sum(
+        1 for lbl in (fin_level, kw_level, beh_level, bl_level, loop_level, temp_level)
+        if _LEVEL_ORDER.get(lbl, 0) >= _LEVEL_ORDER[TIER_WATCH]
     )
-    if domains_at_medium_or_worse >= 2:
-        combined = _merge_level(combined, "Immediate Crisis")
+    if domains_at_watch_or_worse >= 2:
+        combined = _merge_level(combined, TIER_EMERGENCY)
 
-    # ✅ Fixed — log every escalation for safety audit trail
-    if combined == "Immediate Crisis":
+    # Logging
+    if combined == TIER_EMERGENCY:
         logger.warning(
-            f"IMMEDIATE CRISIS DETECTED — "
-            f"financial={fin_signals} | "
-            f"keywords={kw_hits} | "
-            f"behavioral={beh_hits}"
+            f"EMERGENCY DETECTED — "
+            f"financial={fin_signals} | keywords={kw_hits} | "
+            f"behavioral={beh_hits} | blacklist={bl_hits} | "
+            f"loops={loop_hits} | temporal={temp_hits}"
         )
-    elif combined == "Medium Risk":
+    elif combined in (TIER_ALERT, TIER_WATCH):
         logger.info(
-            f"Medium Risk flagged — "
-            f"financial={fin_signals} | "
-            f"keywords={kw_hits} | "
-            f"behavioral={beh_hits}"
+            f"{combined} flagged — "
+            f"financial={fin_signals} | keywords={kw_hits} | "
+            f"blacklist={bl_hits} | loops={loop_hits} | temporal={temp_hits}"
         )
     else:
-        logger.debug("Crisis check passed — Low Risk")
+        logger.debug("Crisis check passed — Normal")
 
     # Build alert messages
     alerts: List[str] = []
@@ -317,17 +477,31 @@ def detect_crisis(
             "escalate per your safety protocol."
         )
 
-    # ✅ Added — helpline footer for Immediate Crisis
-    if combined == "Immediate Crisis":
+    if bl_hits:
+        app_names = [a["app_name"] for a in matched_apps]
+        if app_names:
+            alerts.append(f"Predatory loan app detected: {', '.join(app_names)}. "
+                          "Do NOT pay additional fees. Report immediately.")
+        else:
+            alerts.append("Desperation language detected — user may be under coercion.")
+
+    if loop_hits:
+        alerts.append("Debt-cycling behavior detected — user may be trapped in a loan loop.")
+
+    if temp_hits:
+        alerts.append("Late-night distress interaction detected — elevated risk window.")
+
+    # Helpline footer for Emergency
+    if combined == TIER_EMERGENCY:
         alerts.append(_HELPLINE_FOOTER)
 
-    if combined == "Low Risk" and not alerts:
+    if combined == TIER_NORMAL and not alerts:
         alerts.append(
-            "Low Risk: No crisis signals detected from finance, "
+            "Normal: No crisis signals detected from finance, "
             "text, and behavior in this pass."
         )
 
-    return {
+    result = {
         "level"      : combined,
         "alerts"     : alerts,
         "savings"    : savings,
@@ -336,8 +510,19 @@ def detect_crisis(
             "financial" : fin_signals,
             "keywords"  : kw_hits,
             "behavioral": beh_hits,
+            "blacklist" : bl_hits,
+            "loops"     : loop_hits,
+            "temporal"  : temp_hits,
         },
     }
+
+    # Attach hotlines and matched apps on Emergency
+    if combined == TIER_EMERGENCY:
+        result["hotlines"] = _CRISIS_HOTLINES
+    if matched_apps:
+        result["matched_apps"] = matched_apps
+
+    return result
 
 
 # ─── Standalone Test ─────────────────────────────────────────

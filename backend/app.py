@@ -5,7 +5,10 @@
 
 from __future__ import annotations
 
-import os
+# ADD this import at the top of the file with the other imports
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))  # expose project root modules
+from backend.comprehensive_routes import comprehensive_bp          # import the new blueprint
 
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -31,7 +34,7 @@ def create_app() -> Flask:
     CORS(
         app,
         supports_credentials=True,
-        resources={r"/api/*": {"origins": [app.config["FRONTEND_ORIGIN"]]}},
+        resources={r"/api/*": {"origins": ["*"]}},  # Allow all origins for testing
     )
     init_extensions(app)
     app.teardown_appcontext(close_mongo)
@@ -41,7 +44,7 @@ def create_app() -> Flask:
     app.register_blueprint(citizen_bp)
     app.register_blueprint(counsellor_bp)
     app.register_blueprint(admin_bp)
-
+    app.register_blueprint(comprehensive_bp)  # register the new comprehensive blueprint
     @app.get("/api/health")
     def health_check():
         """Simple health endpoint for deployment checks."""

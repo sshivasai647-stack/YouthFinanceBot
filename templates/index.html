@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Youth Financial Guardian</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#121212',
+                        darker: '#0a0a0a',
+                        card: '#1e1e1e',
+                        primary: '#3b82f6',
+                        primaryDark: '#2563eb'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom scrollbar for chat area */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-darker text-gray-100 font-sans h-screen flex flex-col overflow-hidden relative">
+
+    <!-- Crisis Overlay -->
+    <div id="crisisOverlay" class="fixed inset-0 bg-red-900 z-50 hidden flex-col items-center justify-center p-6 text-center">
+        <i class="fas fa-exclamation-triangle text-6xl text-white mb-6"></i>
+        <h1 class="text-3xl font-bold text-white mb-4">You are not alone. Help is available.</h1>
+        <p class="text-xl text-red-200 mb-8">Please reach out immediately. We are here to support you.</p>
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mb-6 shadow-2xl">
+            <h2 class="text-2xl font-bold text-red-600 mb-2">iCall Helpline</h2>
+            <a href="tel:9152987821" class="text-5xl font-extrabold text-gray-900 block hover:text-red-700 transition-colors">9152987821</a>
+        </div>
+        <button onclick="closeCrisisOverlay()" class="mt-4 px-6 py-3 bg-red-800 hover:bg-red-700 text-white font-medium rounded-lg transition-colors border border-red-500 shadow-lg">Return to Chat</button>
+    </div>
+
+    <!-- Auth / OTP Modal -->
+    <div id="authModal" class="hidden fixed inset-0 bg-black/80 z-50 flex-col items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 w-full max-w-md shadow-2xl relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <h2 class="text-xl font-bold text-white mb-2">Save Your Profile</h2>
+            <p class="text-gray-400 text-sm mb-6">Enter your phone number to securely save your financial profile and health score.</p>
+            
+            <!-- Phone Step -->
+            <div id="stepPhone">
+                <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase">Mobile Number</label>
+                <input type="text" id="inputPhone" placeholder="10-digit number" maxlength="10" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary mb-4">
+                <button onclick="requestOTP()" id="btnSendOtp" class="w-full bg-primary hover:bg-primaryDark text-white py-2 rounded-lg font-medium transition-colors">Send OTP</button>
+            </div>
+            
+            <!-- OTP Step -->
+            <div id="stepOtp" class="hidden">
+                <p class="text-sm text-green-400 mb-4" id="otpSuccessMsg"></p>
+                <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase">Enter 6-digit OTP</label>
+                <input type="text" id="inputOtp" placeholder="••••••" maxlength="6" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary tracking-widest text-center text-lg mb-4">
+                <button onclick="verifyOTP()" id="btnVerifyOtp" class="w-full bg-green-600 hover:bg-green-500 text-white py-2 rounded-lg font-medium transition-colors">Verify & Save Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 translate-y-20 opacity-0 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 transition-all duration-300 z-50">
+        <i class="fas fa-check-circle text-xl"></i>
+        <span id="toastMsg" class="font-medium">Profile saved successfully!</span>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-card border-b border-gray-800 p-4 flex justify-between items-center z-10 shrink-0 shadow-md">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-shield-alt text-primary text-2xl"></i>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-primary hidden sm:block">Youth Financial Guardian</h1>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-primary sm:hidden">YFG</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="openAuthModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-sm transition-colors shadow flex items-center gap-2">
+                <i class="fas fa-save"></i>
+                <span class="hidden sm:inline">Save Profile</span>
+            </button>
+            <button onclick="downloadReport()" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg text-sm transition-colors shadow flex items-center gap-2">
+                <i class="fas fa-file-pdf"></i>
+                <span class="hidden sm:inline">Download Report</span>
+            </button>
+            <div class="flex bg-gray-800 rounded-lg p-1 overflow-x-auto text-sm shadow-inner">
+                <button onclick="setLang('english')" id="btn-lang-english" class="lang-btn px-3 py-1 rounded bg-primary text-white font-medium transition-colors">EN</button>
+            <button onclick="setLang('hindi')" id="btn-lang-hindi" class="lang-btn px-3 py-1 rounded text-gray-400 hover:text-white transition-colors">हिं</button>
+            <button onclick="setLang('telugu')" id="btn-lang-telugu" class="lang-btn px-3 py-1 rounded text-gray-400 hover:text-white transition-colors">తె</button>
+            <button onclick="setLang('tamil')" id="btn-lang-tamil" class="lang-btn px-3 py-1 rounded text-gray-400 hover:text-white transition-colors">த</button>
+        </div>
+    </header>
+
+    <!-- Context Panel -->
+    <div class="bg-card border-b border-gray-800 p-4 shrink-0 shadow-sm z-0">
+        <div class="flex flex-wrap gap-4 max-w-4xl mx-auto">
+            <div class="flex-1 min-w-[120px]">
+                <label class="block text-xs font-semibold tracking-wide text-gray-400 mb-1 uppercase">Monthly Income (₹)</label>
+                <input type="number" id="inputIncome" value="0" min="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+            </div>
+            <div class="flex-1 min-w-[120px]">
+                <label class="block text-xs font-semibold tracking-wide text-gray-400 mb-1 uppercase">Monthly Expenses (₹)</label>
+                <input type="number" id="inputExpenses" value="0" min="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+            </div>
+            <div class="flex-1 min-w-[120px]">
+                <label class="block text-xs font-semibold tracking-wide text-gray-400 mb-1 uppercase">Savings Rate (%)</label>
+                <input type="number" id="inputSavings" value="0" min="0" max="100" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div id="chatArea" class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 max-w-4xl mx-auto w-full relative">
+        <!-- Welcome Message -->
+        <div class="flex items-start gap-3 w-full">
+            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1 shadow-md">
+                <i class="fas fa-robot text-white text-sm"></i>
+            </div>
+            <div class="bg-gray-800 border border-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] text-sm md:text-base text-gray-200 shadow-sm">
+                Hi! I'm your Youth Financial Guardian. You can ask me about managing your money, dealing with debt, betting addiction, or investment options. How can I help you today?
+            </div>
+        </div>
+    </div>
+
+    <!-- Typing Indicator (Hidden by default) -->
+    <div id="typingIndicator" class="hidden max-w-4xl mx-auto w-full px-4 py-2 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-md">
+                <i class="fas fa-robot text-white text-sm"></i>
+            </div>
+            <div class="bg-gray-800 border border-gray-700 rounded-2xl rounded-tl-sm px-4 py-4 flex gap-1.5 items-center shadow-sm">
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bg-card border-t border-gray-800 p-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10">
+        <form id="chatForm" class="flex gap-2 max-w-4xl mx-auto">
+            <input type="text" id="messageInput" autocomplete="off" placeholder="Type your message here..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner">
+            <button type="submit" class="bg-primary hover:bg-primaryDark text-white px-5 py-3 rounded-lg font-medium transition-colors flex items-center justify-center min-w-[80px] shadow-md">
+                <i class="fas fa-paper-plane mr-2 hidden sm:inline-block"></i> Send
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // State
+        let currentLanguage = 'english';
+        let chatHistory = [];
+        let sessionBlacklistWarnings = [];
+
+        // DOM Elements
+        const chatArea = document.getElementById('chatArea');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const crisisOverlay = document.getElementById('crisisOverlay');
+
+        // Inputs
+        const inIncome = document.getElementById('inputIncome');
+        const inExpenses = document.getElementById('inputExpenses');
+        const inSavings = document.getElementById('inputSavings');
+
+        // Language Toggle Logic
+        function setLang(lang) {
+            currentLanguage = lang;
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('text-gray-400');
+            });
+            const activeBtn = document.getElementById(`btn-lang-${lang}`);
+            if(activeBtn) {
+                activeBtn.classList.remove('text-gray-400');
+                activeBtn.classList.add('bg-primary', 'text-white');
+            }
+        }
+
+        function closeCrisisOverlay() {
+            crisisOverlay.classList.remove('flex');
+            crisisOverlay.classList.add('hidden');
+        }
+
+        // UI Helpers
+        function scrollToBottom() {
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function appendUserMessage(text) {
+            const html = `
+            <div class="flex justify-end w-full mb-4">
+                <div class="bg-primary text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[85%] text-sm md:text-base shadow-sm">
+                    ${escapeHTML(text)}
+                </div>
+            </div>`;
+            chatArea.insertAdjacentHTML('beforeend', html);
+            scrollToBottom();
+        }
+
+        function appendBotMessage(text, suggestedAction = null) {
+            let actionHtml = '';
+            
+            // Handle suggested actions for context-aware UI
+            if (suggestedAction === 'show_debt_resources') {
+                actionHtml = `
+                <div class="mt-4 bg-red-900/30 border border-red-700/50 rounded-lg p-3 text-red-200 text-sm shadow-inner">
+                    <p class="font-bold text-red-400 mb-2 flex items-center"><i class="fas fa-phone-alt mr-2"></i> Helpline Resources</p>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><strong>iCall:</strong> <a href="tel:9152987821" class="underline decoration-red-500/50 hover:text-white transition-colors">9152987821</a></li>
+                        <li><strong>NALSA (Legal Aid):</strong> <a href="tel:15100" class="underline decoration-red-500/50 hover:text-white transition-colors">15100</a></li>
+                    </ul>
+                </div>`;
+            } else if (suggestedAction === 'show_betting_alternatives') {
+                actionHtml = `
+                <div class="mt-4 bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-3 text-yellow-200 text-sm shadow-inner">
+                    <p class="font-bold text-yellow-400 mb-2 flex items-center"><i class="fas fa-lightbulb mr-2 text-yellow-500"></i> Earning Alternatives</p>
+                    <p class="leading-relaxed">Instead of risking money, consider zero-investment skills like freelance writing, video editing, or tutoring. Try setting small daily goals.</p>
+                </div>`;
+            } else if (suggestedAction === 'show_crisis_support') {
+                // Trigger full screen overlay for crisis
+                crisisOverlay.classList.remove('hidden');
+                crisisOverlay.classList.add('flex');
+            }
+
+            const html = `
+            <div class="flex items-start gap-3 w-full mb-4">
+                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1 shadow-md">
+                    <i class="fas fa-robot text-white text-sm"></i>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] text-sm md:text-base text-gray-200 shadow-sm leading-relaxed">
+                    <div class="whitespace-pre-wrap">${escapeHTML(text)}</div>
+                    ${actionHtml}
+                </div>
+            </div>`;
+            chatArea.insertAdjacentHTML('beforeend', html);
+            scrollToBottom();
+        }
+
+        function appendError(text) {
+            const html = `
+            <div class="flex items-center justify-center w-full mb-4">
+                <div class="bg-red-900/40 border border-red-800 text-red-200 rounded-lg px-4 py-3 text-sm max-w-md text-center flex items-center gap-3 shadow-md">
+                    <i class="fas fa-exclamation-circle text-red-400 text-lg shrink-0"></i> 
+                    <span>${escapeHTML(text)}</span>
+                </div>
+            </div>`;
+            chatArea.insertAdjacentHTML('beforeend', html);
+            scrollToBottom();
+        }
+
+        function escapeHTML(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Form Submit
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            // 1. UI Update
+            messageInput.value = '';
+            appendUserMessage(text);
+            typingIndicator.classList.remove('hidden');
+            scrollToBottom();
+
+            // 2. Prepare Payload
+            const payload = {
+                message: text,
+                language: currentLanguage,
+                context: {
+                    income: parseFloat(inIncome.value) || 0,
+                    expenses: parseFloat(inExpenses.value) || 0,
+                    savings_rate: parseFloat(inSavings.value) || 0
+                },
+                history: chatHistory
+            };
+
+            // 3. API Request
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                typingIndicator.classList.add('hidden');
+
+                if (!response.ok) {
+                    throw new Error('Server returned ' + response.status);
+                }
+
+                const data = await response.json();
+                
+                // 4. Update History
+                chatHistory.push({ role: 'user', content: text });
+                chatHistory.push({ role: 'assistant', content: data.message || 'No response message.' });
+                
+                // Limit history to last 10 messages (5 exchanges) to keep payload small
+                if (chatHistory.length > 10) chatHistory = chatHistory.slice(chatHistory.length - 10);
+
+                // 5. Show blacklist warning banner (orange) if present
+                if (data.blacklist_warning) {
+                    sessionBlacklistWarnings.push(data.blacklist_warning);
+                    const bw = data.blacklist_warning;
+                    const bannerHtml = `
+                    <div class="flex justify-center w-full mb-2">
+                        <div class="bg-orange-900/40 border border-orange-600/60 rounded-lg px-4 py-3 max-w-[90%] w-full shadow-md">
+                            <p class="font-bold text-orange-400 text-sm flex items-center mb-1">
+                                <i class="fas fa-exclamation-triangle mr-2 text-orange-500"></i> Predatory Loan Alert: ${escapeHTML(bw.app)}
+                            </p>
+                            <p class="text-orange-200 text-xs mb-1"><strong>Risk:</strong> ${escapeHTML(bw.risk)}</p>
+                            <p class="text-orange-200 text-xs"><strong>Action:</strong> ${escapeHTML(bw.action)}</p>
+                        </div>
+                    </div>`;
+                    chatArea.insertAdjacentHTML('beforeend', bannerHtml);
+                }
+
+                // 6. Show Bot Response
+                let action = data.suggested_action;
+                
+                // Override action if severe crisis is detected in response
+                if (data.crisis_level === "Emergency" || data.crisis_level === "Immediate Crisis" || data.path === "PATH_MENTAL_HEALTH") {
+                    action = "show_crisis_support";
+                }
+                
+                appendBotMessage(data.message || 'I am sorry, I do not understand.', action);
+
+            } catch (err) {
+                typingIndicator.classList.add('hidden');
+                console.error(err);
+                appendError("Unable to reach the server. Please check your connection and try again.");
+            }
+        });
+
+        async function downloadReport() {
+            try {
+                const payload = {
+                    income: parseFloat(inIncome.value) || 0,
+                    expenses: parseFloat(inExpenses.value) || 0,
+                    savings_rate: parseFloat(inSavings.value) || 0,
+                    blacklist_warnings: sessionBlacklistWarnings
+                };
+                
+                const response = await fetch('http://127.0.0.1:5000/api/report/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error('Report generation failed');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'Financial_Report.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error(err);
+                appendError("Unable to download report. Please try again later.");
+            }
+        }
+
+        // --- Auth & Profile Saving Logic ---
+        const authModal = document.getElementById('authModal');
+        const stepPhone = document.getElementById('stepPhone');
+        const stepOtp = document.getElementById('stepOtp');
+        const inputPhone = document.getElementById('inputPhone');
+        const inputOtp = document.getElementById('inputOtp');
+        const otpSuccessMsg = document.getElementById('otpSuccessMsg');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        
+        let pendingPhone = "";
+
+        function openAuthModal() {
+            authModal.classList.remove('hidden');
+            authModal.classList.add('flex');
+            stepPhone.classList.remove('hidden');
+            stepOtp.classList.add('hidden');
+            inputPhone.value = '';
+            inputOtp.value = '';
+        }
+
+        function closeAuthModal() {
+            authModal.classList.add('hidden');
+            authModal.classList.remove('flex');
+        }
+
+        function showToast(message) {
+            toastMsg.innerText = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        async function requestOTP() {
+            const phone = inputPhone.value.trim();
+            if (phone.length !== 10 || isNaN(phone)) {
+                alert("Please enter a valid 10-digit phone number.");
+                return;
+            }
+            
+            const btn = document.getElementById('btnSendOtp');
+            btn.innerText = "Sending...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/mobile-auth/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: phone })
+                });
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error || "Failed to send OTP");
+                
+                pendingPhone = phone;
+                stepPhone.classList.add('hidden');
+                stepOtp.classList.remove('hidden');
+                
+                // For development, display the OTP on the screen since there's no SMS gateway
+                otpSuccessMsg.innerText = `OTP sent! (Dev OTP: ${data.otp})`;
+                
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.innerText = "Send OTP";
+                btn.disabled = false;
+            }
+        }
+
+        async function verifyOTP() {
+            const otp = inputOtp.value.trim();
+            if (otp.length !== 6) {
+                alert("Please enter a 6-digit OTP.");
+                return;
+            }
+
+            const btn = document.getElementById('btnVerifyOtp');
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/mobile-auth/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: pendingPhone, otp: otp })
+                });
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error || "Verification failed");
+                
+                // OTP verified, now save the profile using the phone as user_id
+                await executeSaveProfile(data.user_id);
+                
+            } catch (err) {
+                alert(err.message);
+                btn.innerText = "Verify & Save Profile";
+                btn.disabled = false;
+            }
+        }
+
+        async function executeSaveProfile(userId) {
+            try {
+                const payload = {
+                    user_id: userId,
+                    income: parseFloat(inIncome.value) || 0,
+                    expenses: parseFloat(inExpenses.value) || 0,
+                    savings_rate: parseFloat(inSavings.value) || 0
+                };
+                
+                const response = await fetch('http://127.0.0.1:5000/api/save-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error || "Failed to save profile");
+                
+                closeAuthModal();
+                showToast(`Profile saved! Your health score: ${data.health_score}/100`);
+                
+            } catch (err) {
+                alert(err.message);
+                document.getElementById('btnVerifyOtp').innerText = "Verify & Save Profile";
+                document.getElementById('btnVerifyOtp').disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

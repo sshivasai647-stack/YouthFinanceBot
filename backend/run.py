@@ -1,5 +1,8 @@
 """Entry point for YouthFinanceBot backend server."""
 import os
+from dotenv import load_dotenv
+load_dotenv()  # Must be BEFORE any module that reads env vars (e.g., GROQ_API_KEY)
+
 from backend.app import create_app
 
 app = create_app()

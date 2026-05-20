@@ -1,0 +1,17 @@
+--- CHECK 1: Basic connection ---
+Status Code: 200
+Response: {
+  "crisis_level": null,
+  "message": "Based on your debt situation, here are steps to get relief:\n\n1. **List all debts** \u2014 loan apps, personal loans, credit cards\n2. **Calculate total burden** \u2014 interest rates and due dates\n3. **Create repayment plan** \u2014 pay high-interest first\n4. **Know your rights** \u2014 RBI sachet protects you\n5. **Report harassment** \u2014 don't pay illegal fees/threats\n\nWould you like help creating a specific repayment plan?",
+  "path": "PATH_D",
+  "response_type": "debt_guidance",
+  "suggested_action": "show_debt_resources"
+}
+
+--- CHECK 2: Crisis overlay ---
+Status Code: 500
+Response: {
+  "details": "Object of type ResponseType is not JSON serializable",
+  "error": "unified_chat_route failed",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\sshiv\\youth_finance_bot\\backend\\comprehensive_routes.py\", line 816, in unified_chat_route\n    return jsonify({\n           ~~~~~~~^^\n        \"message\": crisis_response,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<2 lines>...\n        \"suggested_action\": \"Seek immediate professional help or contact helplines.\"\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    }), 200\n    ^^\n  File \"C:\\Users\\sshiv\\Appdata\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\flask\\json\\__init__.py\", line 170, in jsonify\n    return current_app.json.response(*args, **kwargs)  # type: ignore[return-value]\n           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\sshiv\\Appdata\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\flask\\json\\provider.py\", line 214, in response\n    f\"{self.dumps(obj, **dump_args)}\\n\", mimetype=self.mimetype\n       ~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\sshiv\\Appdata\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\flask\\json\\provider.py\", line 179, in dumps\n    return json.dumps(obj, **kwargs)\n           ~~~~~~~~~~^^^^^^^^^^^^^^^\n  File \"C:\\Users\\sshiv\\Appdata\\Local\\Programs\\Python\\Python313\\Lib\\json\\__init__.py\", line 238, in dumps\n    **kw).encode(obj)\n          ~~~~~~^^^^^\n  File \"C:\\Users\\sshiv\\Appdata\\Local\\Programs\\Python\\Python313\\Lib\\json\\encoder.py\", line 200, in encode\n    chunks = self.iterencode(o, _one_shot=True)\n  File \"C:\\Users\\sshiv\\Appdata\\Local\\Programs\\Python\\Python313\\Lib\\json\\encoder.py\", line 261, in iterencode\n    return _iterencode(o, 0)\n  File \"C:\\Users\\sshiv\\Appdata\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\flask\\json\\provider.py\", line 121, in _default\n    raise TypeError(f\"Object of type {type(o).__name__} is not JSON serializable\")\nTypeError: Object of type ResponseType is not JSON serializable\n"
+}

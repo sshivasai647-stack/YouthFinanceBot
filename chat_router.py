@@ -218,7 +218,7 @@ class ChatRouter:
     def _detect_crisis(self, user_message: str) -> Optional[str]:
         """
         Check for immediate crisis indicators.
-        Returns crisis level string.
+        Returns crisis level string (Emergency, Alert, Watch, or None).
         """
         try:
             crisis_result = detect_crisis(
@@ -227,13 +227,15 @@ class ChatRouter:
                 debt=self.user_context.debt_amount,
                 text=user_message
             )
-            level = crisis_result.get("level", "Low Risk")
+            level = crisis_result.get("level", "Normal")
             
-            if level == "Immediate Crisis":
+            if level in ("Emergency", "Immediate Crisis"):
                 logger.warning(f"CRISIS DETECTED: {crisis_result.get('alerts', [])}")
-                return "Immediate Crisis"
-            elif level == "Medium Risk":
-                return "Medium Risk"
+                return "Emergency"
+            elif level in ("Alert", "Medium Risk"):
+                return "Alert"
+            elif level == "Watch":
+                return "Watch"
             else:
                 return None
         except Exception as e:
