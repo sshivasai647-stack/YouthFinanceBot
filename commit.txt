@@ -1,0 +1,12 @@
+feat: complete Youth Financial Guardian Chatbot
+
+- Flask REST API migration from Streamlit
+- Unified /api/chat route with ChatRouter
+- 4-tier crisis detection system (Normal/Watch/Alert/Emergency)
+- Predatory loan blacklist (15 apps) with Hinglish behavioral parsing
+- Financial engine (survival days, health score, debt-free date)
+- OTP phone authentication with in-memory storage
+- JSON profile persistence (data/profiles.json)
+- PDF report generation with government schemes and helpline footer
+- Mobile-responsive frontend (index.html) with Tailwind CSS
+- MongoDB fast-fail timeout (2s) in extensions.py

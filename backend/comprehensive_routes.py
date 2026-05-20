@@ -136,8 +136,19 @@ def run_betting_alternative_route():
 def detect_crisis_route():
     try:
         data = validate_json_data()
+        income = float(data.get('income', 0))
+        expenses = data.get('expenses', {})
+        if not isinstance(expenses, dict):
+            expenses = {"total": float(expenses) if isinstance(expenses, (int, float)) else 0}
+        debt = float(data.get('debt', 0))
         text = data.get('text', '')
-        result = detect_crisis(text)
+        
+        result = detect_crisis(
+            income=income,
+            expenses=expenses,
+            debt=debt,
+            text=text,
+        )
         return jsonify({"result": result}), 200
     except Exception as e:
         return handle_error("detect_crisis", e)
@@ -285,7 +296,9 @@ def suggest_earning_route():
     try:
         data = validate_json_data()
         user_profile = data.get('user_profile', {})
-        result = suggest_earning(user_profile)
+        age = int(user_profile.get('age', 18))
+        skills = user_profile.get('skills', [])
+        result = suggest_earning(age, skills)
         return jsonify({"result": result}), 200
     except Exception as e:
         return handle_error("suggest_earning", e)

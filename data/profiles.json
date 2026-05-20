@@ -4,6 +4,13 @@
         "expenses": 20000.0,
         "savings_rate": 60.0,
         "health_score": 90,
-        "saved_at": "2026-05-20T12:33:09.421777"
+        "saved_at": "2026-05-20T13:34:24.990104"
+    },
+    "9390969736": {
+        "income": 0.0,
+        "expenses": 0.0,
+        "savings_rate": 0.0,
+        "health_score": 50,
+        "saved_at": "2026-05-20T13:11:57.191392"
     }
 }

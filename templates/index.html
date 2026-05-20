@@ -3,268 +3,1164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Youth Financial Guardian</title>
+    <title>Youth Financial Guardian Dashboard</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS / CDNs -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    },
                     colors: {
-                        dark: '#121212',
-                        darker: '#0a0a0a',
-                        card: '#1e1e1e',
+                        dark: '#0f172a',
+                        darker: '#020617',
+                        card: '#1e293b',
+                        cardBorder: '#334155',
                         primary: '#3b82f6',
-                        primaryDark: '#2563eb'
+                        primaryDark: '#2563eb',
+                        accent: '#10b981',
+                        accentDark: '#059669',
                     }
                 }
             }
         }
     </script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Marked.js (Markdown Parser) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Chart.js (Charts) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- PDF.js (Client-side PDF Text Extraction) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    
     <style>
-        /* Custom scrollbar for chat area */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+        }
+        .heading-font {
+            font-family: 'Outfit', sans-serif;
+        }
+        /* Custom scrollbars */
         ::-webkit-scrollbar {
             width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: #1e1e1e;
+            background: #020617;
         }
         ::-webkit-scrollbar-thumb {
-            background: #4b5563;
+            background: #334155;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280;
+            background: #475569;
+        }
+        /* Smooth page fade transition */
+        .page-view {
+            transition: opacity 0.2s ease-in-out;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
     </style>
 </head>
-<body class="bg-darker text-gray-100 font-sans h-screen flex flex-col overflow-hidden relative">
+<body class="text-slate-100 h-screen overflow-hidden flex flex-col md:flex-row relative">
 
-    <!-- Crisis Overlay -->
-    <div id="crisisOverlay" class="fixed inset-0 bg-red-900 z-50 hidden flex-col items-center justify-center p-6 text-center">
-        <i class="fas fa-exclamation-triangle text-6xl text-white mb-6"></i>
-        <h1 class="text-3xl font-bold text-white mb-4">You are not alone. Help is available.</h1>
-        <p class="text-xl text-red-200 mb-8">Please reach out immediately. We are here to support you.</p>
-        <div class="bg-white rounded-lg p-6 w-full max-w-md mb-6 shadow-2xl">
-            <h2 class="text-2xl font-bold text-red-600 mb-2">iCall Helpline</h2>
-            <a href="tel:9152987821" class="text-5xl font-extrabold text-gray-900 block hover:text-red-700 transition-colors">9152987821</a>
+    <!-- Crisis Overlay (Full Screen) -->
+    <div id="crisisOverlay" class="fixed inset-0 bg-red-950/95 z-50 hidden flex-col items-center justify-center p-6 text-center backdrop-blur-md">
+        <div class="animate-pulse mb-6">
+            <i class="fas fa-exclamation-triangle text-8xl text-red-500"></i>
         </div>
-        <button onclick="closeCrisisOverlay()" class="mt-4 px-6 py-3 bg-red-800 hover:bg-red-700 text-white font-medium rounded-lg transition-colors border border-red-500 shadow-lg">Return to Chat</button>
+        <h1 class="heading-font text-4xl font-extrabold text-white mb-4">Immediate Financial & Mental Support</h1>
+        <p class="text-xl text-red-200 mb-8 max-w-xl">You do not have to handle this alone. Please reach out immediately to verified experts who can support you without judgement.</p>
+        
+        <div class="grid gap-4 w-full max-w-md mb-8">
+            <div class="bg-slate-900/80 border border-red-500/30 rounded-xl p-5 shadow-2xl">
+                <h2 class="text-lg font-bold text-red-400 mb-1">iCall Mental Health Helpline</h2>
+                <a href="tel:9152987821" class="text-3xl font-extrabold text-white block hover:text-red-400 transition-colors">9152987821</a>
+                <p class="text-xs text-slate-400 mt-1">Mon-Sat 8AM-10PM</p>
+            </div>
+            <div class="bg-slate-900/80 border border-red-500/30 rounded-xl p-5 shadow-2xl">
+                <h2 class="text-lg font-bold text-red-400 mb-1">Vandrevala Foundation Helpline</h2>
+                <a href="tel:18602662345" class="text-3xl font-extrabold text-white block hover:text-red-400 transition-colors">1860-2662-345</a>
+                <p class="text-xs text-slate-400 mt-1">24 Hours / 7 Days (Toll Free)</p>
+            </div>
+            <div class="bg-slate-900/80 border border-red-500/30 rounded-xl p-5 shadow-2xl">
+                <h2 class="text-lg font-bold text-red-400 mb-1">Cyber Crime Helpline (Predatory Apps)</h2>
+                <a href="tel:1930" class="text-3xl font-extrabold text-white block hover:text-red-400 transition-colors">1930</a>
+                <p class="text-xs text-slate-400 mt-1">24 Hours (Government of India)</p>
+            </div>
+        </div>
+        <button onclick="closeCrisisOverlay()" class="px-8 py-3 bg-red-700 hover:bg-red-650 text-white font-semibold rounded-xl transition-all shadow-lg border border-red-500 transform hover:scale-105">
+            Return to Dashboard
+        </button>
     </div>
 
     <!-- Auth / OTP Modal -->
-    <div id="authModal" class="hidden fixed inset-0 bg-black/80 z-50 flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 w-full max-w-md shadow-2xl relative">
-            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+    <div id="authModal" class="hidden fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
                 <i class="fas fa-times text-xl"></i>
             </button>
-            <h2 class="text-xl font-bold text-white mb-2">Save Your Profile</h2>
-            <p class="text-gray-400 text-sm mb-6">Enter your phone number to securely save your financial profile and health score.</p>
             
-            <!-- Phone Step -->
-            <div id="stepPhone">
-                <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase">Mobile Number</label>
-                <input type="text" id="inputPhone" placeholder="10-digit number" maxlength="10" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary mb-4">
-                <button onclick="requestOTP()" id="btnSendOtp" class="w-full bg-primary hover:bg-primaryDark text-white py-2 rounded-lg font-medium transition-colors">Send OTP</button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <i class="fas fa-key text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="heading-font text-xl font-bold text-white">Save Profile Securely</h2>
+                    <p class="text-xs text-slate-400">Secure 10-digit Indian Mobile OTP Lock</p>
+                </div>
             </div>
             
-            <!-- OTP Step -->
+            <hr class="border-slate-800 mb-6">
+            
+            <!-- Phone Input Step -->
+            <div id="stepPhone">
+                <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Enter Mobile Number</label>
+                <div class="flex gap-2 mb-4">
+                    <span class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-3 text-slate-300 font-semibold flex items-center">+91</span>
+                    <input type="text" id="inputPhone" placeholder="9988776655" maxlength="10" 
+                        class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary font-mono text-lg tracking-wider">
+                </div>
+                <p class="text-xs text-slate-400 mb-6">We will send a 6-digit OTP verification code to this number. No passwords required.</p>
+                <button onclick="requestOTP()" id="btnSendOtp" class="w-full bg-primary hover:bg-primaryDark text-white py-3 rounded-xl font-semibold transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                    <span>Send Verification Code</span> <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+            
+            <!-- OTP Input Step -->
             <div id="stepOtp" class="hidden">
-                <p class="text-sm text-green-400 mb-4" id="otpSuccessMsg"></p>
-                <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase">Enter 6-digit OTP</label>
-                <input type="text" id="inputOtp" placeholder="••••••" maxlength="6" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary tracking-widest text-center text-lg mb-4">
-                <button onclick="verifyOTP()" id="btnVerifyOtp" class="w-full bg-green-600 hover:bg-green-500 text-white py-2 rounded-lg font-medium transition-colors">Verify & Save Profile</button>
+                <p class="text-sm text-emerald-400 mb-4 bg-emerald-950/30 border border-emerald-500/20 px-3 py-2 rounded-lg" id="otpSuccessMsg"></p>
+                <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Enter 6-Digit OTP</label>
+                <input type="text" id="inputOtp" placeholder="••••••" maxlength="6" 
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary tracking-widest text-center text-2xl font-mono mb-4">
+                <button onclick="verifyOTP()" id="btnVerifyOtp" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-semibold transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-check-circle"></i> <span>Verify & Save Profile</span>
+                </button>
+                <button onclick="showStepPhone()" class="w-full mt-3 text-xs text-slate-400 hover:text-white transition-colors underline text-center block">Change phone number</button>
             </div>
         </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-4 right-4 translate-y-20 opacity-0 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 transition-all duration-300 z-50">
-        <i class="fas fa-check-circle text-xl"></i>
+    <div id="toast" class="fixed bottom-4 right-4 translate-y-20 opacity-0 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 z-50 border border-emerald-400/20">
+        <i class="fas fa-check-circle text-2xl"></i>
         <span id="toastMsg" class="font-medium">Profile saved successfully!</span>
     </div>
 
-    <!-- Header -->
-    <header class="bg-card border-b border-gray-800 p-4 flex justify-between items-center z-10 shrink-0 shadow-md">
+    <!-- Left Sidebar for Navigation (Desktop) -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 hidden md:flex z-15 shadow-xl">
+        <div class="flex flex-col">
+            <!-- Header Brand -->
+            <div class="p-6 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <i class="fas fa-shield-halved text-white text-xl animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="heading-font font-extrabold text-lg text-white leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-300">YFG Guardian</h1>
+                    <span class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Active Protection</span>
+                </div>
+            </div>
+            
+            <!-- Menu Navigation -->
+            <nav class="px-4 py-2 space-y-1">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all duration-200">
+                    <i class="fas fa-chart-pie text-lg w-6"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="switchTab('chat')" id="nav-chat" class="nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all duration-200">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-comment-dots text-lg w-6"></i>
+                        <span>Guardian Chat</span>
+                    </div>
+                    <span class="h-2 w-2 rounded-full bg-blue-500 animate-ping"></span>
+                </button>
+                <button onclick="switchTab('analyzer')" id="nav-analyzer" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all duration-200">
+                    <i class="fas fa-file-invoice-dollar text-lg w-6"></i>
+                    <span>Statement Analyzer</span>
+                </button>
+                <button onclick="switchTab('blacklist')" id="nav-blacklist" class="nav-item w-full flex items-center justify-between px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all duration-200">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-shield-virus text-lg w-6"></i>
+                        <span>Loan App Checker</span>
+                    </div>
+                    <span id="blacklist-count-badge" class="hidden bg-orange-500 text-slate-950 font-bold text-[10px] px-1.5 py-0.5 rounded-full">!</span>
+                </button>
+                <button onclick="switchTab('goals')" id="nav-goals" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all duration-200">
+                    <i class="fas fa-bullseye text-lg w-6"></i>
+                    <span>Goal Tracker</span>
+                </button>
+                <button onclick="switchTab('schemes')" id="nav-schemes" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all duration-200">
+                    <i class="fas fa-university text-lg w-6"></i>
+                    <span>Govt Schemes</span>
+                </button>
+                <button onclick="switchTab('earn')" id="nav-earn" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all duration-200">
+                    <i class="fas fa-laptop-code text-lg w-6"></i>
+                    <span>Earn Suggester</span>
+                </button>
+            </nav>
+        </div>
+        
+        <!-- Sidebar Footer -->
+        <div class="p-4 bg-slate-950/40 border-t border-slate-800/80">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
+                    <i class="fas fa-user-shield text-slate-400 text-xs"></i>
+                </div>
+                <div class="truncate">
+                    <p class="text-xs font-semibold text-slate-300" id="sidebar-user-id">Guest Account</p>
+                    <span class="text-[9px] text-slate-500 bg-slate-800 px-1 py-0.5 rounded">Not Verified</span>
+                </div>
+            </div>
+            <button onclick="openAuthModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 hover:text-white rounded-lg transition-all flex items-center justify-center gap-1.5">
+                <i class="fas fa-lock"></i> <span>Lock Account (OTP)</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Top Mobile Navbar -->
+    <div class="md:hidden bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0 shadow-lg">
         <div class="flex items-center gap-2">
-            <i class="fas fa-shield-alt text-primary text-2xl"></i>
-            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-primary hidden sm:block">Youth Financial Guardian</h1>
-            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-primary sm:hidden">YFG</h1>
+            <i class="fas fa-shield-halved text-blue-500 text-2xl"></i>
+            <h1 class="heading-font font-bold text-lg text-white">YFG Guardian</h1>
         </div>
-        <div class="flex items-center gap-4">
-            <button onclick="openAuthModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-sm transition-colors shadow flex items-center gap-2">
-                <i class="fas fa-save"></i>
-                <span class="hidden sm:inline">Save Profile</span>
-            </button>
-            <button onclick="downloadReport()" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg text-sm transition-colors shadow flex items-center gap-2">
-                <i class="fas fa-file-pdf"></i>
-                <span class="hidden sm:inline">Download Report</span>
-            </button>
-            <div class="flex bg-gray-800 rounded-lg p-1 overflow-x-auto text-sm shadow-inner">
-                <button onclick="setLang('english')" id="btn-lang-english" class="lang-btn px-3 py-1 rounded bg-primary text-white font-medium transition-colors">EN</button>
-            <button onclick="setLang('hindi')" id="btn-lang-hindi" class="lang-btn px-3 py-1 rounded text-gray-400 hover:text-white transition-colors">हिं</button>
-            <button onclick="setLang('telugu')" id="btn-lang-telugu" class="lang-btn px-3 py-1 rounded text-gray-400 hover:text-white transition-colors">తె</button>
-            <button onclick="setLang('tamil')" id="btn-lang-tamil" class="lang-btn px-3 py-1 rounded text-gray-400 hover:text-white transition-colors">த</button>
-        </div>
-    </header>
-
-    <!-- Context Panel -->
-    <div class="bg-card border-b border-gray-800 p-4 shrink-0 shadow-sm z-0">
-        <div class="flex flex-wrap gap-4 max-w-4xl mx-auto">
-            <div class="flex-1 min-w-[120px]">
-                <label class="block text-xs font-semibold tracking-wide text-gray-400 mb-1 uppercase">Monthly Income (₹)</label>
-                <input type="number" id="inputIncome" value="0" min="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <div class="flex-1 min-w-[120px]">
-                <label class="block text-xs font-semibold tracking-wide text-gray-400 mb-1 uppercase">Monthly Expenses (₹)</label>
-                <input type="number" id="inputExpenses" value="0" min="0" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-            <div class="flex-1 min-w-[120px]">
-                <label class="block text-xs font-semibold tracking-wide text-gray-400 mb-1 uppercase">Savings Rate (%)</label>
-                <input type="number" id="inputSavings" value="0" min="0" max="100" class="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-            </div>
-        </div>
+        
+        <!-- Toggle button -->
+        <button onclick="toggleMobileMenu()" class="text-slate-300 hover:text-white p-2">
+            <i class="fas fa-bars text-xl" id="menu-icon"></i>
+        </button>
     </div>
 
-    <!-- Chat Area -->
-    <div id="chatArea" class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 max-w-4xl mx-auto w-full relative">
-        <!-- Welcome Message -->
-        <div class="flex items-start gap-3 w-full">
-            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1 shadow-md">
-                <i class="fas fa-robot text-white text-sm"></i>
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-menu" class="hidden absolute top-[53px] inset-x-0 bg-slate-900 border-b border-slate-850 p-4 z-40 shadow-2xl flex-col gap-2 transition-all duration-300 md:hidden">
+        <button onclick="switchTab('dashboard'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
+            <i class="fas fa-chart-pie text-lg w-6"></i>
+            <span>Dashboard</span>
+        </button>
+        <button onclick="switchTab('chat'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
+            <i class="fas fa-comment-dots text-lg w-6"></i>
+            <span>Guardian Chat</span>
+        </button>
+        <button onclick="switchTab('analyzer'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
+            <i class="fas fa-file-invoice-dollar text-lg w-6"></i>
+            <span>Statement Analyzer</span>
+        </button>
+        <button onclick="switchTab('blacklist'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
+            <i class="fas fa-shield-virus text-lg w-6"></i>
+            <span>Loan App Checker</span>
+        </button>
+        <button onclick="switchTab('goals'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
+            <i class="fas fa-bullseye text-lg w-6"></i>
+            <span>Goal Tracker</span>
+        </button>
+        <button onclick="switchTab('schemes'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
+            <i class="fas fa-university text-lg w-6"></i>
+            <span>Govt Schemes</span>
+        </button>
+        <button onclick="switchTab('earn'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
+            <i class="fas fa-laptop-code text-lg w-6"></i>
+            <span>Earn Suggester</span>
+        </button>
+        <hr class="border-slate-800 my-2">
+        <button onclick="openAuthModal(); toggleMobileMenu();" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded-lg flex items-center justify-center gap-2">
+            <i class="fas fa-lock"></i> <span>Lock Account (OTP)</span>
+        </button>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-950 relative h-full">
+        <!-- Top Toolbar Header -->
+        <header class="bg-slate-900/60 border-b border-slate-800/80 p-4 flex justify-between items-center z-10 shrink-0 shadow-md">
+            <div>
+                <h1 class="heading-font text-lg font-bold text-white flex items-center gap-2">
+                    <span id="active-tab-title">Financial Health Dashboard</span>
+                </h1>
+                <p class="text-xs text-slate-400 hidden sm:block">Youth financial support and protection portal</p>
             </div>
-            <div class="bg-gray-800 border border-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] text-sm md:text-base text-gray-200 shadow-sm">
-                Hi! I'm your Youth Financial Guardian. You can ask me about managing your money, dealing with debt, betting addiction, or investment options. How can I help you today?
+            
+            <div class="flex items-center gap-3">
+                <button onclick="downloadReport()" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-550 hover:to-teal-450 text-white font-semibold rounded-lg text-xs transition-all shadow-lg flex items-center gap-1.5 transform hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Report</span>
+                </button>
+                <button onclick="openAuthModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs transition-all shadow-lg flex items-center gap-1.5 transform hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fas fa-save"></i>
+                    <span id="btn-save-text">Save Profile</span>
+                </button>
+                
+                <!-- Language Toggles -->
+                <div class="flex bg-slate-800 rounded-lg p-0.5 overflow-x-auto text-[10px] shadow-inner border border-slate-700">
+                    <button onclick="setLang('english')" id="btn-lang-english" class="lang-btn px-2 py-1 rounded bg-primary text-white font-bold transition-all">EN</button>
+                    <button onclick="setLang('hindi')" id="btn-lang-hindi" class="lang-btn px-2 py-1 rounded text-slate-400 hover:text-white transition-all">हिं</button>
+                    <button onclick="setLang('telugu')" id="btn-lang-telugu" class="lang-btn px-2 py-1 rounded text-slate-400 hover:text-white transition-all">తె</button>
+                    <button onclick="setLang('tamil')" id="btn-lang-tamil" class="lang-btn px-2 py-1 rounded text-slate-400 hover:text-white transition-all">த</button>
+                </div>
             </div>
+        </header>
+
+        <!-- Page View Container (Pages are toggled via JS) -->
+        <div id="view-container" class="flex-1 overflow-y-auto p-4 md:p-6 w-full relative">
+            
+            <!-- VIEW 1: DASHBOARD -->
+            <section id="view-dashboard" class="page-view flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto w-full">
+                <!-- Column 1: Profile Form -->
+                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl space-y-6">
+                    <h2 class="heading-font text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-user-edit text-blue-500"></i> Edit Your Financial Profile
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Monthly Income (₹)</label>
+                            <input type="number" id="inputIncome" value="25000" min="0" oninput="triggerRecalculate()"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Monthly Expenses (₹)</label>
+                            <input type="number" id="inputExpenses" value="15000" min="0" oninput="triggerRecalculate()"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Current Savings (₹)</label>
+                            <input type="number" id="inputSavings" value="40000" min="0" oninput="triggerRecalculate()"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Outstanding Debts (₹)</label>
+                            <input type="number" id="inputDebt" value="10000" min="0" oninput="triggerRecalculate()"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold focus:outline-none focus:border-primary">
+                        </div>
+                    </div>
+                    
+                    <hr class="border-slate-800">
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Age</label>
+                            <input type="number" id="inputAge" value="21" min="13" max="25" onchange="syncProfile()"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Gender</label>
+                            <select id="inputGender" onchange="syncProfile()"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold focus:outline-none focus:border-primary">
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">State</label>
+                            <select id="inputState" onchange="syncProfile()"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold focus:outline-none focus:border-primary">
+                                <option value="Delhi">Delhi</option>
+                                <option value="Maharashtra">Maharashtra</option>
+                                <option value="Karnataka">Karnataka</option>
+                                <option value="Tamil Nadu">Tamil Nadu</option>
+                                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                <option value="Telangana">Telangana</option>
+                                <option value="Kerala">Kerala</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">Occupation</label>
+                        <select id="inputOccupation" onchange="syncProfile()"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-semibold focus:outline-none focus:border-primary">
+                            <option value="Student">Student</option>
+                            <option value="Unemployed">Unemployed</option>
+                            <option value="Self-employed">Self-employed / Freelancer</option>
+                            <option value="Entrepreneur">Small Business Owner</option>
+                            <option value="Farmer">Farmer</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Skills (Select All That Apply)</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                            <label class="flex items-center gap-2 bg-slate-850 border border-slate-750 px-3 py-2 rounded-lg cursor-pointer hover:border-slate-500 transition-colors">
+                                <input type="checkbox" value="Coding" checked onchange="syncProfile()" class="rounded bg-slate-800 border-slate-700 text-primary focus:ring-primary w-4 h-4">
+                                <span class="text-xs text-slate-200">Coding</span>
+                            </label>
+                            <label class="flex items-center gap-2 bg-slate-850 border border-slate-750 px-3 py-2 rounded-lg cursor-pointer hover:border-slate-500 transition-colors">
+                                <input type="checkbox" value="Writing" checked onchange="syncProfile()" class="rounded bg-slate-800 border-slate-700 text-primary focus:ring-primary w-4 h-4">
+                                <span class="text-xs text-slate-200">Writing</span>
+                            </label>
+                            <label class="flex items-center gap-2 bg-slate-850 border border-slate-750 px-3 py-2 rounded-lg cursor-pointer hover:border-slate-500 transition-colors">
+                                <input type="checkbox" value="Drawing" onchange="syncProfile()" class="rounded bg-slate-800 border-slate-700 text-primary focus:ring-primary w-4 h-4">
+                                <span class="text-xs text-slate-200">Drawing</span>
+                            </label>
+                            <label class="flex items-center gap-2 bg-slate-850 border border-slate-750 px-3 py-2 rounded-lg cursor-pointer hover:border-slate-500 transition-colors">
+                                <input type="checkbox" value="Video Editing" checked onchange="syncProfile()" class="rounded bg-slate-800 border-slate-700 text-primary focus:ring-primary w-4 h-4">
+                                <span class="text-xs text-slate-200">Video Edit</span>
+                            </label>
+                            <label class="flex items-center gap-2 bg-slate-850 border border-slate-750 px-3 py-2 rounded-lg cursor-pointer hover:border-slate-500 transition-colors">
+                                <input type="checkbox" value="Teaching" onchange="syncProfile()" class="rounded bg-slate-800 border-slate-700 text-primary focus:ring-primary w-4 h-4">
+                                <span class="text-xs text-slate-200">Teaching</span>
+                            </label>
+                            <label class="flex items-center gap-2 bg-slate-850 border border-slate-750 px-3 py-2 rounded-lg cursor-pointer hover:border-slate-500 transition-colors">
+                                <input type="checkbox" value="Social Media" onchange="syncProfile()" class="rounded bg-slate-800 border-slate-700 text-primary focus:ring-primary w-4 h-4">
+                                <span class="text-xs text-slate-200">Social Media</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Column 2: Dashboard Statistics -->
+                <div class="flex-1 flex flex-col gap-6">
+                    <!-- Stat Cards Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        
+                        <!-- Health Score Card -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -bottom-4 text-primary/10 text-8xl group-hover:scale-110 transition-transform">
+                                <i class="fas fa-heart-pulse"></i>
+                            </div>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Financial Health Score</h3>
+                            <div class="flex items-baseline gap-2 mb-2">
+                                <span class="heading-font text-4xl font-extrabold text-white" id="stat-health">0</span>
+                                <span class="text-slate-400 text-sm">/ 100</span>
+                            </div>
+                            <div class="h-2 w-full bg-slate-850 rounded-full mb-3 overflow-hidden">
+                                <div id="stat-health-bar" class="h-full bg-primary rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <span id="stat-health-status" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300">Calculating...</span>
+                        </div>
+
+                        <!-- Survival Days Card -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -bottom-4 text-emerald-500/10 text-8xl group-hover:scale-110 transition-transform">
+                                <i class="fas fa-shield-heart"></i>
+                            </div>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Survival Buffer</h3>
+                            <div class="flex items-baseline gap-1 mb-3">
+                                <span class="heading-font text-4xl font-extrabold text-white" id="stat-survival">0</span>
+                                <span class="text-slate-400 text-sm">Days</span>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed" id="stat-survival-tip">Your savings are calculating.</p>
+                        </div>
+
+                        <!-- Savings Rate Card -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -bottom-4 text-amber-500/10 text-8xl group-hover:scale-110 transition-transform">
+                                <i class="fas fa-piggy-bank"></i>
+                            </div>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Savings Rate</h3>
+                            <div class="flex items-baseline gap-1 mb-2">
+                                <span class="heading-font text-4xl font-extrabold text-white" id="stat-savings">0</span>
+                                <span class="text-slate-400 text-sm">%</span>
+                            </div>
+                            <div class="h-2 w-full bg-slate-850 rounded-full mb-3 overflow-hidden">
+                                <div id="stat-savings-bar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <p class="text-[10px] text-slate-400 leading-relaxed" id="stat-savings-tip">Savings score based on standard rules.</p>
+                        </div>
+
+                        <!-- Debt payoff date Card -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -bottom-4 text-indigo-500/10 text-8xl group-hover:scale-110 transition-transform">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Estimated Debt Free Date</h3>
+                            <div class="flex items-baseline gap-1 mb-3">
+                                <span class="heading-font text-2xl font-bold text-white tracking-wide" id="stat-debtfree">Calculating...</span>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed" id="stat-debt-tip">Outstanding liabilities vs surplus cache.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions Grid -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                        <h3 class="heading-font text-md font-bold text-white mb-4"><i class="fas fa-sparkles text-amber-500 mr-1"></i> Quick Intelligent Recommendations</h3>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="dashboard-quick-recs">
+                            <!-- Populated dynamically via triggerRecalculate() -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 2: GUARDIAN CHAT -->
+            <section id="view-chat" class="page-view hidden flex-col h-full max-w-4xl mx-auto w-full relative">
+                <!-- Message History Area -->
+                <div id="chatArea" class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 w-full relative scroll-smooth bg-slate-950 rounded-2xl border border-slate-900">
+                    <!-- Welcome Bot Message -->
+                    <div class="flex items-start gap-3 w-full">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shrink-0 mt-1 shadow-lg">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-sm px-4 py-3.5 max-w-[85%] text-sm md:text-base text-slate-200 shadow-md leading-relaxed">
+                            Hi! I'm your **Youth Financial Guardian**. I can assist you with budgeting, handling heavy debt traps, identifying predatory loan sharks, dealing with betting/gaming pressure, or pointing you towards clean investment options and free legal aid. 
+                            <br><br>
+                            How can I support you today? (Try telling me: *"I'm trapped in a quick loan app debt"* or *"How do I invest 500 rupees"*).
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Typing indicator -->
+                <div id="typingIndicator" class="hidden w-full px-4 py-2 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 shadow">
+                            <i class="fas fa-robot text-slate-400 text-xs"></i>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-850 rounded-2xl rounded-tl-sm px-4 py-4 flex gap-1.5 items-center shadow-sm">
+                            <div class="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                            <div class="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                            <div class="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Typing Form -->
+                <div class="pt-4 pb-2 shrink-0">
+                    <form id="chatForm" class="flex gap-2">
+                        <input type="text" id="messageInput" autocomplete="off" placeholder="Ask YFG Guardian about loans, apps, savings, or anxiety..." 
+                            class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-primary transition-all shadow-inner text-sm md:text-base">
+                        <button type="submit" class="bg-primary hover:bg-primaryDark text-white px-6 rounded-xl font-semibold transition-all flex items-center justify-center gap-1.5 shadow-lg active:scale-95">
+                            <i class="fas fa-paper-plane text-sm"></i> <span class="hidden sm:inline">Send</span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- VIEW 3: STATEMENT ANALYZER -->
+            <section id="view-analyzer" class="page-view hidden max-w-5xl mx-auto w-full space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+                    <h2 class="heading-font text-xl font-bold text-white mb-1"><i class="fas fa-file-invoice-dollar text-emerald-500 mr-2"></i> Bank Statement Analyzer</h2>
+                    <p class="text-xs text-slate-400 mb-4">Upload standard Indian bank statements (PDF, CSV, or TXT) to securely classify expenditures instantly.</p>
+                    
+                    <!-- File Drag Zone -->
+                    <div id="dropZone" ondragover="event.preventDefault()" ondrop="handleFileDrop(event)"
+                        class="border-2 border-dashed border-slate-700 hover:border-primary hover:bg-slate-850/50 rounded-2xl p-8 text-center cursor-pointer transition-all duration-200">
+                        <input type="file" id="fileInput" class="hidden" accept=".pdf,.csv,.txt" onchange="handleFileSelect(event)">
+                        <div class="space-y-3">
+                            <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                                <i class="fas fa-cloud-upload-alt text-2xl"></i>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-200">Drag & drop your statement here, or <span class="text-primary underline">browse files</span></p>
+                            <p class="text-[10px] text-slate-500">Supports PDF (text extracts), CSV, TXT files (Max 5MB)</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Analysis Loader (Hidden by default) -->
+                    <div id="analyzerLoader" class="hidden flex flex-col items-center justify-center p-8 text-center space-y-4">
+                        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <p class="text-sm font-medium text-slate-350">Extracting statement logs and crunching categories...</p>
+                    </div>
+                </div>
+
+                <!-- Results Panel (Hidden until loaded) -->
+                <div id="analyzerResults" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Column 1: Spent Chart & Recommendation -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-6">
+                        <h3 class="heading-font text-md font-bold text-white">Spend Summary</h3>
+                        
+                        <div class="flex justify-around items-center bg-slate-950 p-4 rounded-xl">
+                            <div class="text-center">
+                                <span class="text-[10px] text-slate-400 uppercase font-semibold">Total Spent</span>
+                                <p class="text-xl font-extrabold text-red-400" id="totalSpentVal">₹0.00</p>
+                            </div>
+                            <div class="w-px h-8 bg-slate-800"></div>
+                            <div class="text-center">
+                                <span class="text-[10px] text-slate-400 uppercase font-semibold">Total Credit</span>
+                                <p class="text-xl font-extrabold text-emerald-400" id="totalCreditVal">₹0.00</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Chart container -->
+                        <div class="w-full max-w-[240px] mx-auto min-h-[200px] flex items-center justify-center">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                        
+                        <!-- Analyzer tips -->
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wide mb-2"><i class="fas fa-lightbulb text-amber-500"></i> Spending Warnings</h4>
+                            <ul id="analyzerRecsList" class="space-y-2 text-xs text-slate-450">
+                                <!-- Populated dynamically -->
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Column 2: Transactions Table -->
+                    <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-[520px]">
+                        <h3 class="heading-font text-md font-bold text-white mb-4 flex justify-between items-center">
+                            <span>Detected Transactions</span>
+                            <span class="text-xs text-slate-400" id="transCountText">0 items</span>
+                        </h3>
+                        
+                        <div class="flex-1 overflow-y-auto rounded-xl border border-slate-800">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-slate-950 text-slate-400 font-bold border-b border-slate-850">
+                                        <th class="p-3">Date</th>
+                                        <th class="p-3">Description</th>
+                                        <th class="p-3">Category</th>
+                                        <th class="p-3 text-right">Amount (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transTableBody" class="divide-y divide-slate-850">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 4: LOAN APPS CHECKER -->
+            <section id="view-blacklist" class="page-view hidden max-w-4xl mx-auto w-full space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="heading-font text-xl font-bold text-white mb-1"><i class="fas fa-shield-virus text-orange-500 mr-2"></i> Predatory Loan App Checker</h2>
+                    <p class="text-xs text-slate-400 mb-6">Enter the name of any instant loan platform or micro-credit application to verify if they are blacklisted for predatory recovery tactics, fake licenses, or extreme interest rates.</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-2 max-w-lg mb-6">
+                        <input type="text" id="blacklistSearchInput" placeholder="Enter app name (e.g. Koko Loan, Credit Wallet)..." 
+                            class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary text-sm font-semibold">
+                        <button onclick="checkAppBlacklist()" class="bg-orange-600 hover:bg-orange-500 text-white font-semibold px-6 py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-1.5 active:scale-95 text-sm">
+                            <i class="fas fa-magnifying-glass"></i> Scan App
+                        </button>
+                    </div>
+                    
+                    <!-- Search Results Box -->
+                    <div id="blacklistResultBox" class="hidden">
+                        <!-- Populated dynamically (danger alert or safe success card) -->
+                    </div>
+                </div>
+                
+                <!-- Preset Apps Matrix -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <h3 class="heading-font text-md font-bold text-white mb-4"><i class="fas fa-list-check text-slate-400 mr-1"></i> Interactive Threat Database</h3>
+                    <p class="text-xs text-slate-400 mb-4">Common Indian predatory loan apps matched inside our Hinglish NLP behavioral engine. Click any app tag to instantly verify security details.</p>
+                    
+                    <div class="flex flex-wrap gap-2" id="preset-apps-tags">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 5: GOAL TRACKER -->
+            <section id="view-goals" class="page-view hidden max-w-5xl mx-auto w-full space-y-6">
+                <!-- Page Top Card: Header & Form -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+                    <h2 class="heading-font text-xl font-bold text-white mb-1"><i class="fas fa-bullseye text-primary mr-2"></i> Financial Goal Tracker</h2>
+                    <p class="text-xs text-slate-400 mb-6">Calculate future goals adjusted automatically for 5% inflation and structured at a target 8% compound investment return.</p>
+                    
+                    <form id="goalForm" onsubmit="addGoal(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Goal Name</label>
+                            <input type="text" id="goalName" required placeholder="e.g. Laptop, Bike, College Fees" 
+                                class="w-full bg-slate-850 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-semibold focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Target Amount Today (₹)</label>
+                            <input type="number" id="goalAmount" required min="1" placeholder="50000"
+                                class="w-full bg-slate-850 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-semibold focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Target Time (Months)</label>
+                            <input type="number" id="goalMonths" required min="1" placeholder="12"
+                                class="w-full bg-slate-850 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs font-semibold focus:outline-none focus:border-primary">
+                        </div>
+                        <div>
+                            <button type="submit" class="w-full bg-primary hover:bg-primaryDark text-white font-semibold py-2.5 rounded-xl transition-all shadow-md text-xs flex items-center justify-center gap-1.5 active:scale-95">
+                                <i class="fas fa-plus"></i> Add Financial Goal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Goals Output List -->
+                <div class="space-y-4">
+                    <h3 class="heading-font text-md font-bold text-white mb-2"><i class="fas fa-list text-slate-400 mr-1"></i> Your Milestones</h3>
+                    
+                    <!-- Empty State for Goals (shown by default) -->
+                    <div id="goalsEmptyState" class="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center space-y-4 shadow-xl">
+                        <div class="w-16 h-16 rounded-full bg-slate-850/50 flex items-center justify-center mx-auto text-slate-500">
+                            <i class="fas fa-bullseye text-3xl"></i>
+                        </div>
+                        <div class="max-w-sm mx-auto">
+                            <p class="text-sm font-bold text-slate-200">No financial goals created yet!</p>
+                            <p class="text-xs text-slate-400 mt-1">Setup targets like purchasing a laptop or paying semesters to calculate required monthly savings adjusted for inflation.</p>
+                        </div>
+                        <div class="flex items-center justify-center gap-2 text-primary font-semibold text-sm animate-bounce mt-4">
+                            <span>Use the form above to add your first goal</span>
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Container for active goals -->
+                    <div id="goalsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 6: GOVERNMENT SCHEMES -->
+            <section id="view-schemes" class="page-view hidden max-w-4xl mx-auto w-full space-y-6">
+                <!-- Page Top Info -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+                    <h2 class="heading-font text-xl font-bold text-white mb-1"><i class="fas fa-university text-primary mr-2"></i> Eligible Government Schemes</h2>
+                    <p class="text-xs text-slate-400">Discover and match direct-benefit Indian government pension, loan, agricultural, or education welfare schemes tailored automatically to your financial and demographic profile variables.</p>
+                </div>
+                
+                <!-- Empty State for Schemes -->
+                <div id="schemesEmptyState" class="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center space-y-4 shadow-xl">
+                    <div class="w-16 h-16 rounded-full bg-slate-850/50 flex items-center justify-center mx-auto text-slate-500">
+                        <i class="fas fa-id-card-clip text-3xl"></i>
+                    </div>
+                    <div class="max-w-sm mx-auto">
+                        <p class="text-sm font-bold text-slate-200">Demographic Profile Incomplete</p>
+                        <p class="text-xs text-slate-400 mt-1">Schemes eligibility rules require valid Age, Occupation, Income, and State variables. Please configure these on the Home Dashboard to load matched policies.</p>
+                    </div>
+                    <button onclick="switchTab('dashboard')" class="px-6 py-2.5 bg-primary hover:bg-primaryDark text-xs font-semibold text-white rounded-xl transition-all shadow-md transform hover:scale-[1.02] active:scale-[0.98]">
+                        Complete My Profile
+                    </button>
+                </div>
+                
+                <!-- Schemes Grid Container -->
+                <div id="schemesList" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Populated dynamically via triggerRecalculate() -->
+                </div>
+            </section>
+
+            <!-- VIEW 7: EARN SUGGESTER -->
+            <section id="view-earn" class="page-view hidden max-w-4xl mx-auto w-full space-y-6">
+                <!-- Page Top Info -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
+                    <h2 class="heading-font text-xl font-bold text-white mb-1"><i class="fas fa-laptop-code text-accent mr-2"></i> Side Income & Micro-Gig Suggestions</h2>
+                    <p class="text-xs text-slate-400">Discover handpicked, trending side hustles, zero-investment micro-gigs, and gig platforms tailored to your specific age and skills checklist.</p>
+                </div>
+                
+                <!-- Empty State for Earn Suggestions -->
+                <div id="earnEmptyState" class="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center space-y-4 shadow-xl">
+                    <div class="w-16 h-16 rounded-full bg-slate-850/50 flex items-center justify-center mx-auto text-slate-550">
+                        <i class="fas fa-laptop-house text-3xl"></i>
+                    </div>
+                    <div class="max-w-sm mx-auto">
+                        <p class="text-sm font-bold text-slate-200">No Earning Skills Selected</p>
+                        <p class="text-xs text-slate-400 mt-1">Earning suggestions are mapped directly to your age and specific coding, writing, video editing, or design skills. Go to the Home Dashboard to pick items first.</p>
+                    </div>
+                    <button onclick="switchTab('dashboard')" class="px-6 py-2.5 bg-accent hover:bg-accentDark text-xs font-semibold text-white rounded-xl transition-all shadow-md transform hover:scale-[1.02] active:scale-[0.98]">
+                        Add Skills in Profile
+                    </button>
+                </div>
+                
+                <!-- Earning Suggestions Grid -->
+                <div id="earnList" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Populated dynamically via triggerRecalculate() -->
+                </div>
+            </section>
+            
         </div>
-    </div>
+    </main>
 
-    <!-- Typing Indicator (Hidden by default) -->
-    <div id="typingIndicator" class="hidden max-w-4xl mx-auto w-full px-4 py-2 shrink-0">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-md">
-                <i class="fas fa-robot text-white text-sm"></i>
-            </div>
-            <div class="bg-gray-800 border border-gray-700 rounded-2xl rounded-tl-sm px-4 py-4 flex gap-1.5 items-center shadow-sm">
-                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bottom Bar -->
-    <div class="bg-card border-t border-gray-800 p-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10">
-        <form id="chatForm" class="flex gap-2 max-w-4xl mx-auto">
-            <input type="text" id="messageInput" autocomplete="off" placeholder="Type your message here..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-inner">
-            <button type="submit" class="bg-primary hover:bg-primaryDark text-white px-5 py-3 rounded-lg font-medium transition-colors flex items-center justify-center min-w-[80px] shadow-md">
-                <i class="fas fa-paper-plane mr-2 hidden sm:inline-block"></i> Send
-            </button>
-        </form>
-    </div>
-
+    <!-- Global State & Dashboard Logic JS -->
     <script>
-        // State
+        // State management
+        let globalProfile = {
+            income: 25000,
+            expenses: 15000,
+            savings: 40000,
+            debt: 10000,
+            age: 21,
+            gender: 'male',
+            state: 'Delhi',
+            occupation: 'Student',
+            skills: ['Coding', 'Writing', 'Video Editing']
+        };
+
+        let activeTab = 'dashboard';
         let currentLanguage = 'english';
         let chatHistory = [];
         let sessionBlacklistWarnings = [];
+        let activeGoals = [];
+        let categoryChartInstance = null;
+        
+        const PRESET_LOAN_APPS = [
+            "Koko Loan", "Minuteee Loan", "Credit Wallet", "CashAdvance", "Minute Loan",
+            "CashCow", "FastRupya", "QuickCredit", "EasyLoan", "InstantRupiah",
+            "LoanShark", "CredMate", "CashExpress", "RupiahMaju", "SwiftCash"
+        ];
 
-        // DOM Elements
-        const chatArea = document.getElementById('chatArea');
-        const chatForm = document.getElementById('chatForm');
-        const messageInput = document.getElementById('messageInput');
-        const typingIndicator = document.getElementById('typingIndicator');
-        const crisisOverlay = document.getElementById('crisisOverlay');
+        // On document load
+        window.addEventListener('DOMContentLoaded', () => {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+            switchTab('dashboard');
+            syncProfileFromInputs();
+            renderPresetAppTags();
+        });
 
-        // Inputs
-        const inIncome = document.getElementById('inputIncome');
-        const inExpenses = document.getElementById('inputExpenses');
-        const inSavings = document.getElementById('inputSavings');
+        // Toggle Sidebar on mobile
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const icon = document.getElementById('menu-icon');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        }
 
-        // Language Toggle Logic
+        // Switch View Controller
+        function switchTab(tabId) {
+            activeTab = tabId;
+            
+            // Toggle active classes on menus
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('bg-primary', 'text-white', 'hover:bg-slate-800');
+                item.classList.add('text-slate-300', 'hover:bg-slate-800');
+            });
+            
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.remove('text-slate-300', 'hover:bg-slate-800');
+                activeNav.classList.add('bg-primary', 'text-white');
+            }
+            
+            // Toggle view containers
+            document.querySelectorAll('.page-view').forEach(view => {
+                view.classList.add('hidden');
+            });
+            
+            const activeView = document.getElementById(`view-${tabId}`);
+            if (activeView) {
+                activeView.classList.remove('hidden');
+                activeView.classList.add('flex-col');
+            }
+            
+            // Update Title Header text
+            const tabTitles = {
+                dashboard: 'Financial Health Dashboard',
+                chat: 'YFG Guardian Chat Helper',
+                analyzer: 'Bank Statement Classifier',
+                blacklist: 'Predatory App Blacklist Scanner',
+                goals: 'Inflation & Compound Goal Tracker',
+                schemes: 'Direct Matched Government Schemes',
+                earn: 'Zero-Investment Side Hustle Suggestions'
+            };
+            document.getElementById('active-tab-title').innerText = tabTitles[tabId] || 'Financial Dashboard';
+            
+            if (tabId === 'chat') {
+                setTimeout(scrollToBottom, 100);
+            }
+        }
+
+        // Sync Global Profile Dict from Form Input elements
+        function syncProfileFromInputs() {
+            const inIncome = document.getElementById('inputIncome');
+            const inExpenses = document.getElementById('inputExpenses');
+            const inSavings = document.getElementById('inputSavings');
+            const inDebt = document.getElementById('inputDebt');
+            const inAge = document.getElementById('inputAge');
+            const inGender = document.getElementById('inputGender');
+            const inState = document.getElementById('inputState');
+            const inOccupation = document.getElementById('inputOccupation');
+            
+            // Get skills checklist
+            const checkedSkills = [];
+            document.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                checkedSkills.push(cb.value);
+            });
+
+            globalProfile = {
+                income: parseFloat(inIncome.value) || 0,
+                expenses: parseFloat(inExpenses.value) || 0,
+                savings: parseFloat(inSavings.value) || 0,
+                debt: parseFloat(inDebt.value) || 0,
+                age: parseInt(inAge.value) || 18,
+                gender: inGender.value,
+                state: inState.value,
+                occupation: inOccupation.value,
+                skills: checkedSkills
+            };
+            
+            // Show alert counts if blacklist warning present in badge
+            const badge = document.getElementById('blacklist-count-badge');
+            if (sessionBlacklistWarnings.length > 0) {
+                badge.classList.remove('hidden');
+                badge.innerText = sessionBlacklistWarnings.length;
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Sync and perform stats calculations dynamically
+        async function triggerRecalculate() {
+            syncProfileFromInputs();
+            
+            try {
+                // Call /api/finance/calculate
+                const response = await fetch('http://127.0.0.1:5000/api/finance/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        income: globalProfile.income,
+                        expenses: globalProfile.expenses,
+                        savings: globalProfile.savings,
+                        total_debt: globalProfile.debt
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Finance calculation failed');
+                
+                const data = await response.json();
+                const snap = data.financial_snapshot;
+                
+                // Update Dashboard statistics card elements
+                document.getElementById('stat-health').innerText = snap.financial_health_score;
+                document.getElementById('stat-health-bar').style.width = `${snap.financial_health_score}%`;
+                
+                let healthClass = 'bg-red-500';
+                let healthStatus = 'Danger (Watch List)';
+                if (snap.financial_health_score >= 70) {
+                    healthClass = 'bg-emerald-500';
+                    healthStatus = 'Excellent Health';
+                } else if (snap.financial_health_score >= 40) {
+                    healthClass = 'bg-amber-500';
+                    healthStatus = 'Fair Status';
+                }
+                
+                const bar = document.getElementById('stat-health-bar');
+                bar.className = `h-full rounded-full transition-all duration-500 ${healthClass}`;
+                
+                const badge = document.getElementById('stat-health-status');
+                badge.innerText = healthStatus;
+                badge.className = `px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${snap.financial_health_score >= 70 ? 'bg-emerald-950 text-emerald-450 border border-emerald-500/20' : snap.financial_health_score >= 40 ? 'bg-amber-950 text-amber-450 border border-amber-500/20' : 'bg-red-950 text-red-450 border border-red-500/20'}`;
+                
+                document.getElementById('stat-survival').innerText = snap.survival_days;
+                
+                let survivalTip = 'Critical: No safety buffer. Try cutting micro-expenses.';
+                if (snap.survival_days >= 180) {
+                    survivalTip = 'Superb: 6+ months of safety buffer covered perfectly!';
+                } else if (snap.survival_days >= 90) {
+                    survivalTip = 'Good: 3+ months of buffer to handle unexpected shocks.';
+                } else if (snap.survival_days > 0) {
+                    survivalTip = 'Moderate: Attempt to scale savings buffer to 90 days.';
+                }
+                document.getElementById('stat-survival-tip').innerText = survivalTip;
+                
+                document.getElementById('stat-savings').innerText = snap.savings_rate;
+                document.getElementById('stat-savings-bar').style.width = `${snap.savings_rate}%`;
+                
+                let savingsTip = 'Goal: Save at least 15% of your income.';
+                if (snap.savings_rate >= 25) {
+                    savingsTip = 'High Savings: Phenomenal capital accumulation rate!';
+                } else if (snap.savings_rate >= 10) {
+                    savingsTip = 'Healthy: Keeping up with basic buffer compounding.';
+                }
+                document.getElementById('stat-savings-tip').innerText = savingsTip;
+                
+                document.getElementById('stat-debtfree').innerText = snap.debt_free_date;
+                
+                let debtTip = 'You are debt-free! Maintain this clean balance.';
+                if (globalProfile.debt > 0) {
+                    debtTip = globalProfile.income > globalProfile.expenses ? `Debt payoffs structured at ₹${(globalProfile.income - globalProfile.expenses).toFixed(0)}/month surplus.` : 'Repayments stalled: Expenses meet or exceed income!';
+                }
+                document.getElementById('stat-debt-tip').innerText = debtTip;
+
+                // Build quick interactive recommendations in the Dashboard recommendations panel
+                const recsPanel = document.getElementById('dashboard-quick-recs');
+                recsPanel.innerHTML = '';
+                
+                let recommendations = [];
+                if (snap.financial_health_score < 40) {
+                    recommendations.push({ title: 'Debt Relief Protocol', text: 'Ask YFG Guardian: "Help me clear my debt app loans" to fetch custom legal and debt prioritizing advice.', icon: 'fa-shield-halved', color: 'text-red-400 bg-red-950/40 border border-red-500/20' });
+                }
+                if (snap.survival_days < 90) {
+                    recommendations.push({ title: 'Build Emergency Buffer', text: 'Set aside ₹1,000 immediately in a separate liquid account to safeguard against emergency debt traps.', icon: 'fa-piggy-bank', color: 'text-amber-400 bg-amber-950/40 border border-amber-500/20' });
+                } else if (snap.financial_health_score >= 70) {
+                    recommendations.push({ title: 'Clean Investment Route', text: 'Ready to compound! Ask YFG: "Where can I invest my surplus savings securely" to learn about PPF or mutual funds.', icon: 'fa-chart-line', color: 'text-emerald-400 bg-emerald-950/40 border border-emerald-500/20' });
+                }
+                
+                if (globalProfile.occupation === 'Student') {
+                    recommendations.push({ title: 'Matched Student Loans', text: 'Check the Govt Schemes tab to apply for the "PM Vidya Lakshmi" education loan directly with RBI bank partnerships.', icon: 'fa-graduation-cap', color: 'text-blue-400 bg-blue-950/40 border border-blue-500/20' });
+                } else if (globalProfile.occupation === 'Unemployed' && globalProfile.skills.length > 0) {
+                    recommendations.push({ title: 'Micro-gig Monetization', text: 'Check the Earn tab to start prompt engineering or video editing gigs with zero cash investment.', icon: 'fa-laptop-code', color: 'text-teal-400 bg-teal-950/40 border border-teal-500/20' });
+                }
+                
+                if (recommendations.length === 0) {
+                    recommendations.push({ title: 'Keep Up the Good Work', text: 'Maintain a clean expense log by checking the Statement Analyzer. Keep asking the chatbot questions!', icon: 'fa-circle-check', color: 'text-slate-400 bg-slate-800/40' });
+                }
+                
+                recommendations.forEach(r => {
+                    recsPanel.insertAdjacentHTML('beforeend', `
+                        <div class="p-3 rounded-xl flex items-start gap-3 text-xs ${r.color}">
+                            <i class="fas ${r.icon} text-lg shrink-0 mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-0.5">${r.title}</h4>
+                                <p class="leading-relaxed opacity-90">${r.text}</p>
+                            </div>
+                        </div>
+                    `);
+                });
+
+                // Trigger loading corresponding items for other tabs dynamically
+                loadGovtSchemes();
+                loadSideEarningSuggestions();
+                
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Call triggerRecalculate as profile sync hook
+        function syncProfile() {
+            triggerRecalculate();
+        }
+
+        // Language toggle
         function setLang(lang) {
             currentLanguage = lang;
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.classList.remove('bg-primary', 'text-white');
-                btn.classList.add('text-gray-400');
+                btn.classList.add('text-slate-400');
             });
             const activeBtn = document.getElementById(`btn-lang-${lang}`);
-            if(activeBtn) {
-                activeBtn.classList.remove('text-gray-400');
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400');
                 activeBtn.classList.add('bg-primary', 'text-white');
             }
+            
+            // Add system language notification in Chat
+            const langAlert = {
+                english: 'System changed to English language guidance.',
+                hindi: 'हिंदी भाषा सहायता सक्रिय कर दी गई है।',
+                telugu: 'తెలుగు భాషా మార్గదర్శకత్వం యాక్టివేట్ చేయబడింది.',
+                tamil: 'தமிழ் மொழி வழிகாட்டி செயல்படுத்தப்பட்டது.'
+            };
+            appendSystemMessage(langAlert[lang] || 'Language swapped.');
+        }
+
+        function appendSystemMessage(text) {
+            const html = `
+            <div class="flex items-center justify-center w-full my-2">
+                <span class="bg-slate-900 text-slate-450 border border-slate-850 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider">
+                    ${text}
+                </span>
+            </div>`;
+            const chatContainer = document.getElementById('chatArea');
+            chatContainer.insertAdjacentHTML('beforeend', html);
+            scrollToBottom();
         }
 
         function closeCrisisOverlay() {
-            crisisOverlay.classList.remove('flex');
-            crisisOverlay.classList.add('hidden');
+            document.getElementById('crisisOverlay').classList.add('hidden');
         }
 
-        // UI Helpers
         function scrollToBottom() {
-            chatArea.scrollTop = chatArea.scrollHeight;
+            const chatContainer = document.getElementById('chatArea');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         function appendUserMessage(text) {
             const html = `
             <div class="flex justify-end w-full mb-4">
-                <div class="bg-primary text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[85%] text-sm md:text-base shadow-sm">
+                <div class="bg-primary text-white rounded-2xl rounded-tr-sm px-4 py-3.5 max-w-[85%] text-sm md:text-base shadow-lg leading-relaxed">
                     ${escapeHTML(text)}
                 </div>
             </div>`;
-            chatArea.insertAdjacentHTML('beforeend', html);
+            const chatContainer = document.getElementById('chatArea');
+            chatContainer.insertAdjacentHTML('beforeend', html);
             scrollToBottom();
         }
 
         function appendBotMessage(text, suggestedAction = null) {
             let actionHtml = '';
             
-            // Handle suggested actions for context-aware UI
             if (suggestedAction === 'show_debt_resources') {
                 actionHtml = `
-                <div class="mt-4 bg-red-900/30 border border-red-700/50 rounded-lg p-3 text-red-200 text-sm shadow-inner">
-                    <p class="font-bold text-red-400 mb-2 flex items-center"><i class="fas fa-phone-alt mr-2"></i> Helpline Resources</p>
-                    <ul class="list-disc list-inside space-y-2">
-                        <li><strong>iCall:</strong> <a href="tel:9152987821" class="underline decoration-red-500/50 hover:text-white transition-colors">9152987821</a></li>
-                        <li><strong>NALSA (Legal Aid):</strong> <a href="tel:15100" class="underline decoration-red-500/50 hover:text-white transition-colors">15100</a></li>
+                <div class="mt-4 bg-red-950/40 border border-red-500/20 rounded-xl p-4 text-red-200 text-xs shadow-inner">
+                    <p class="font-bold text-red-400 mb-2 flex items-center gap-1.5"><i class="fas fa-phone-alt"></i> Indian Crisis Legal Support</p>
+                    <ul class="space-y-2">
+                        <li class="flex justify-between items-center bg-slate-900/60 p-2 rounded">
+                            <span>iCall Mental Helpline:</span> 
+                            <a href="tel:9152987821" class="bg-red-900/80 hover:bg-red-800 text-white px-2 py-1 rounded font-bold transition-all">9152987821</a>
+                        </li>
+                        <li class="flex justify-between items-center bg-slate-900/60 p-2 rounded">
+                            <span>NALSA (Free Legal Aid):</span> 
+                            <a href="tel:15100" class="bg-red-900/80 hover:bg-red-800 text-white px-2 py-1 rounded font-bold transition-all">15100</a>
+                        </li>
                     </ul>
                 </div>`;
             } else if (suggestedAction === 'show_betting_alternatives') {
                 actionHtml = `
-                <div class="mt-4 bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-3 text-yellow-200 text-sm shadow-inner">
-                    <p class="font-bold text-yellow-400 mb-2 flex items-center"><i class="fas fa-lightbulb mr-2 text-yellow-500"></i> Earning Alternatives</p>
-                    <p class="leading-relaxed">Instead of risking money, consider zero-investment skills like freelance writing, video editing, or tutoring. Try setting small daily goals.</p>
+                <div class="mt-4 bg-amber-950/40 border border-amber-500/20 rounded-xl p-4 text-amber-250 text-xs shadow-inner">
+                    <p class="font-bold text-amber-400 mb-2 flex items-center gap-1.5"><i class="fas fa-lightbulb"></i> Zero-Investment Earning Alternative</p>
+                    <p class="leading-relaxed mb-3">Instead of losing cash in betting platforms, consider micro-tasking skills. Check our Earn Suggestions tool to learn prompt engineering or video editing gig channels with massive demand.</p>
+                    <button onclick="switchTab('earn')" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-1.5 rounded transition-all">Go to Earn Suggester</button>
                 </div>`;
             } else if (suggestedAction === 'show_crisis_support') {
-                // Trigger full screen overlay for crisis
-                crisisOverlay.classList.remove('hidden');
-                crisisOverlay.classList.add('flex');
+                // Trigger full screen overlay immediately
+                document.getElementById('crisisOverlay').classList.remove('hidden');
+            } else if (suggestedAction === 'show_statement_analyzer') {
+                actionHtml = `
+                <div class="mt-4 bg-emerald-950/40 border border-emerald-500/20 rounded-xl p-4 text-emerald-250 text-xs shadow-inner">
+                    <p class="font-bold text-emerald-400 mb-2 flex items-center gap-1.5"><i class="fas fa-file-invoice-dollar"></i> Active Statement Classifier</p>
+                    <p class="leading-relaxed mb-3">Upload your bank statement directly to visualize category totals, find high expenditures, and outline automated budgets.</p>
+                    <button onclick="switchTab('analyzer')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded transition-all">Launch Analyzer</button>
+                </div>`;
+            } else if (suggestedAction === 'show_investment_plans') {
+                actionHtml = `
+                <div class="mt-4 bg-blue-950/40 border border-blue-500/20 rounded-xl p-4 text-blue-200 text-xs shadow-inner">
+                    <p class="font-bold text-blue-400 mb-2 flex items-center gap-1.5"><i class="fas fa-piggy-bank"></i> Secure Capital Compounding</p>
+                    <p class="leading-relaxed mb-3">Learn direct investment techniques. Plan future targets adjusting for inflation automatically.</p>
+                    <button onclick="switchTab('goals')" class="bg-blue-650 hover:bg-blue-550 text-white font-bold px-3 py-1.5 rounded transition-all">Configure Goals</button>
+                </div>`;
             }
+
+            // Parse response body via Marked.js (lightweight markdown parser)
+            const renderedMarkdown = marked.parse(text);
 
             const html = `
             <div class="flex items-start gap-3 w-full mb-4">
-                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 mt-1 shadow-md">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shrink-0 mt-1 shadow-lg">
                     <i class="fas fa-robot text-white text-sm"></i>
                 </div>
-                <div class="bg-gray-800 border border-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] text-sm md:text-base text-gray-200 shadow-sm leading-relaxed">
-                    <div class="whitespace-pre-wrap">${escapeHTML(text)}</div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-sm px-4 py-3.5 max-w-[85%] text-sm md:text-base text-slate-200 shadow-md leading-relaxed">
+                    <div class="prose prose-invert text-slate-200 text-xs md:text-sm space-y-2 font-sans">${renderedMarkdown}</div>
                     ${actionHtml}
                 </div>
             </div>`;
-            chatArea.insertAdjacentHTML('beforeend', html);
+            const chatContainer = document.getElementById('chatArea');
+            chatContainer.insertAdjacentHTML('beforeend', html);
             scrollToBottom();
         }
 
         function appendError(text) {
             const html = `
             <div class="flex items-center justify-center w-full mb-4">
-                <div class="bg-red-900/40 border border-red-800 text-red-200 rounded-lg px-4 py-3 text-sm max-w-md text-center flex items-center gap-3 shadow-md">
-                    <i class="fas fa-exclamation-circle text-red-400 text-lg shrink-0"></i> 
-                    <span>${escapeHTML(text)}</span>
+                <div class="bg-red-950/40 border border-red-900/40 text-red-200 rounded-xl px-4 py-3.5 text-xs md:text-sm max-w-md text-center flex items-center gap-3 shadow-lg">
+                    <i class="fas fa-exclamation-circle text-red-400 text-xl shrink-0"></i> 
+                    <span class="leading-relaxed">${escapeHTML(text)}</span>
                 </div>
             </div>`;
-            chatArea.insertAdjacentHTML('beforeend', html);
+            const chatContainer = document.getElementById('chatArea');
+            chatContainer.insertAdjacentHTML('beforeend', html);
             scrollToBottom();
         }
 
@@ -277,15 +1173,20 @@
                 .replace(/'/g, "&#039;");
         }
 
-        // Form Submit
+        // Chat Form Handler
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = messageInput.value.trim();
             if (!text) return;
 
-            // 1. UI Update
+            // 1. Update UI
             messageInput.value = '';
             appendUserMessage(text);
+            
+            const typingIndicator = document.getElementById('typingIndicator');
             typingIndicator.classList.remove('hidden');
             scrollToBottom();
 
@@ -294,14 +1195,15 @@
                 message: text,
                 language: currentLanguage,
                 context: {
-                    income: parseFloat(inIncome.value) || 0,
-                    expenses: parseFloat(inExpenses.value) || 0,
-                    savings_rate: parseFloat(inSavings.value) || 0
+                    income: globalProfile.income,
+                    expenses: globalProfile.expenses,
+                    savings_rate: (globalProfile.income > 0) ? ((globalProfile.income - globalProfile.expenses) / globalProfile.income) * 100 : 0,
+                    total_debt: globalProfile.debt
                 },
                 history: chatHistory
             };
 
-            // 3. API Request
+            // 3. Dispatch API
             try {
                 const response = await fetch('http://127.0.0.1:5000/api/chat', {
                     method: 'POST',
@@ -312,58 +1214,65 @@
                 typingIndicator.classList.add('hidden');
 
                 if (!response.ok) {
-                    throw new Error('Server returned ' + response.status);
+                    throw new Error('Server error code ' + response.status);
                 }
 
                 const data = await response.json();
                 
-                // 4. Update History
+                // 4. Update memory logs
                 chatHistory.push({ role: 'user', content: text });
-                chatHistory.push({ role: 'assistant', content: data.message || 'No response message.' });
+                chatHistory.push({ role: 'assistant', content: data.message || '' });
                 
-                // Limit history to last 10 messages (5 exchanges) to keep payload small
                 if (chatHistory.length > 10) chatHistory = chatHistory.slice(chatHistory.length - 10);
 
-                // 5. Show blacklist warning banner (orange) if present
+                // 5. Blacklisted app triggers
                 if (data.blacklist_warning) {
                     sessionBlacklistWarnings.push(data.blacklist_warning);
+                    
+                    // Increment badge indicator
+                    const badge = document.getElementById('blacklist-count-badge');
+                    badge.classList.remove('hidden');
+                    badge.innerText = sessionBlacklistWarnings.length;
+                    
                     const bw = data.blacklist_warning;
                     const bannerHtml = `
-                    <div class="flex justify-center w-full mb-2">
-                        <div class="bg-orange-900/40 border border-orange-600/60 rounded-lg px-4 py-3 max-w-[90%] w-full shadow-md">
-                            <p class="font-bold text-orange-400 text-sm flex items-center mb-1">
-                                <i class="fas fa-exclamation-triangle mr-2 text-orange-500"></i> Predatory Loan Alert: ${escapeHTML(bw.app)}
+                    <div class="flex justify-center w-full mb-3">
+                        <div class="bg-orange-950/40 border border-orange-500/30 rounded-xl p-4 max-w-[90%] w-full shadow-lg">
+                            <p class="font-bold text-orange-400 text-xs flex items-center gap-1.5 mb-1.5">
+                                <i class="fas fa-triangle-exclamation text-orange-500 text-lg"></i> Predatory Loan Application Identified: ${escapeHTML(bw.app)}
                             </p>
-                            <p class="text-orange-200 text-xs mb-1"><strong>Risk:</strong> ${escapeHTML(bw.risk)}</p>
-                            <p class="text-orange-200 text-xs"><strong>Action:</strong> ${escapeHTML(bw.action)}</p>
+                            <p class="text-orange-200 text-xs leading-relaxed mb-1 font-semibold">Risk Factor: <span class="font-normal opacity-90">${escapeHTML(bw.risk)}</span></p>
+                            <p class="text-orange-200 text-xs leading-relaxed font-semibold">Action Strategy: <span class="font-normal opacity-90">${escapeHTML(bw.action)}</span></p>
                         </div>
                     </div>`;
-                    chatArea.insertAdjacentHTML('beforeend', bannerHtml);
+                    const chatContainer = document.getElementById('chatArea');
+                    chatContainer.insertAdjacentHTML('beforeend', bannerHtml);
                 }
 
-                // 6. Show Bot Response
+                // 6. Handle action transitions
                 let action = data.suggested_action;
-                
-                // Override action if severe crisis is detected in response
                 if (data.crisis_level === "Emergency" || data.crisis_level === "Immediate Crisis" || data.path === "PATH_MENTAL_HEALTH") {
                     action = "show_crisis_support";
                 }
                 
-                appendBotMessage(data.message || 'I am sorry, I do not understand.', action);
+                appendBotMessage(data.message || 'I could not process this prompt correctly.', action);
 
             } catch (err) {
                 typingIndicator.classList.add('hidden');
                 console.error(err);
-                appendError("Unable to reach the server. Please check your connection and try again.");
+                appendError("Unable to connect to YFG Guardian core. Make sure the backend Flask app is running at port 5000.");
             }
         });
 
+        // PDF Generation Trigger
         async function downloadReport() {
             try {
                 const payload = {
-                    income: parseFloat(inIncome.value) || 0,
-                    expenses: parseFloat(inExpenses.value) || 0,
-                    savings_rate: parseFloat(inSavings.value) || 0,
+                    income: globalProfile.income,
+                    expenses: globalProfile.expenses,
+                    savings_rate: (globalProfile.income > 0) ? ((globalProfile.income - globalProfile.expenses) / globalProfile.income) * 100 : 0,
+                    total_debt: globalProfile.debt,
+                    age: globalProfile.age,
                     blacklist_warnings: sessionBlacklistWarnings
                 };
                 
@@ -373,38 +1282,36 @@
                     body: JSON.stringify(payload)
                 });
                 
-                if (!response.ok) throw new Error('Report generation failed');
+                if (!response.ok) throw new Error('Report generation error');
                 
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = 'Financial_Report.pdf';
+                a.download = 'Financial_Report_YFG.pdf';
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
+                showToast("PDF report generated successfully with schemes and helplines!");
             } catch (err) {
                 console.error(err);
-                appendError("Unable to download report. Please try again later.");
+                alert("Could not download report: check connection to backend.");
             }
         }
 
-        // --- Auth & Profile Saving Logic ---
+        // --- OTP Profile Lock Mechanisms ---
         const authModal = document.getElementById('authModal');
         const stepPhone = document.getElementById('stepPhone');
         const stepOtp = document.getElementById('stepOtp');
         const inputPhone = document.getElementById('inputPhone');
         const inputOtp = document.getElementById('inputOtp');
         const otpSuccessMsg = document.getElementById('otpSuccessMsg');
-        const toast = document.getElementById('toast');
-        const toastMsg = document.getElementById('toastMsg');
         
         let pendingPhone = "";
 
         function openAuthModal() {
             authModal.classList.remove('hidden');
-            authModal.classList.add('flex');
             stepPhone.classList.remove('hidden');
             stepOtp.classList.add('hidden');
             inputPhone.value = '';
@@ -413,11 +1320,16 @@
 
         function closeAuthModal() {
             authModal.classList.add('hidden');
-            authModal.classList.remove('flex');
+        }
+
+        function showStepPhone() {
+            stepPhone.classList.remove('hidden');
+            stepOtp.classList.add('hidden');
         }
 
         function showToast(message) {
-            toastMsg.innerText = message;
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = message;
             toast.classList.remove('translate-y-20', 'opacity-0');
             setTimeout(() => {
                 toast.classList.add('translate-y-20', 'opacity-0');
@@ -427,12 +1339,12 @@
         async function requestOTP() {
             const phone = inputPhone.value.trim();
             if (phone.length !== 10 || isNaN(phone)) {
-                alert("Please enter a valid 10-digit phone number.");
+                alert("Please supply a valid 10-digit Indian mobile number.");
                 return;
             }
             
             const btn = document.getElementById('btnSendOtp');
-            btn.innerText = "Sending...";
+            btn.innerText = "Generating Session...";
             btn.disabled = true;
 
             try {
@@ -443,19 +1355,19 @@
                 });
                 const data = await response.json();
                 
-                if (!response.ok) throw new Error(data.error || "Failed to send OTP");
+                if (!response.ok) throw new Error(data.error || "Failed to send OTP code");
                 
                 pendingPhone = phone;
                 stepPhone.classList.add('hidden');
                 stepOtp.classList.remove('hidden');
                 
-                // For development, display the OTP on the screen since there's no SMS gateway
-                otpSuccessMsg.innerText = `OTP sent! (Dev OTP: ${data.otp})`;
+                // Dev environment bypass notification
+                otpSuccessMsg.innerText = `OTP code dispatched! (Development OTP Code: ${data.otp})`;
                 
             } catch (err) {
                 alert(err.message);
             } finally {
-                btn.innerText = "Send OTP";
+                btn.innerText = "Send Verification Code";
                 btn.disabled = false;
             }
         }
@@ -463,12 +1375,12 @@
         async function verifyOTP() {
             const otp = inputOtp.value.trim();
             if (otp.length !== 6) {
-                alert("Please enter a 6-digit OTP.");
+                alert("Verify code is a 6-digit number.");
                 return;
             }
 
             const btn = document.getElementById('btnVerifyOtp');
-            btn.innerText = "Verifying...";
+            btn.innerText = "Authenticating...";
             btn.disabled = true;
 
             try {
@@ -481,7 +1393,6 @@
                 
                 if (!response.ok) throw new Error(data.error || "Verification failed");
                 
-                // OTP verified, now save the profile using the phone as user_id
                 await executeSaveProfile(data.user_id);
                 
             } catch (err) {
@@ -495,9 +1406,10 @@
             try {
                 const payload = {
                     user_id: userId,
-                    income: parseFloat(inIncome.value) || 0,
-                    expenses: parseFloat(inExpenses.value) || 0,
-                    savings_rate: parseFloat(inSavings.value) || 0
+                    income: globalProfile.income,
+                    expenses: globalProfile.expenses,
+                    savings_rate: (globalProfile.income > 0) ? ((globalProfile.income - globalProfile.expenses) / globalProfile.income) * 100 : 0,
+                    total_debt: globalProfile.debt
                 };
                 
                 const response = await fetch('http://127.0.0.1:5000/api/save-profile', {
@@ -507,15 +1419,582 @@
                 });
                 const data = await response.json();
                 
-                if (!response.ok) throw new Error(data.error || "Failed to save profile");
+                if (!response.ok) throw new Error(data.error || "Saving operation failed");
                 
                 closeAuthModal();
-                showToast(`Profile saved! Your health score: ${data.health_score}/100`);
+                showToast(`Profile securely stored! Health Score calculated: ${data.health_score}/100`);
+                
+                // Update UI text
+                document.getElementById('sidebar-user-id').innerText = `+91 ${userId.substring(0, 3)}••••${userId.substring(7)}`;
+                document.getElementById('btn-save-text').innerText = "Update Lock";
                 
             } catch (err) {
                 alert(err.message);
                 document.getElementById('btnVerifyOtp').innerText = "Verify & Save Profile";
                 document.getElementById('btnVerifyOtp').disabled = false;
+            }
+        }
+
+        // --- Page 3: Statement Analyzer drag actions ---
+        function handleFileDrop(e) {
+            e.preventDefault();
+            const zone = document.getElementById('dropZone');
+            zone.classList.remove('border-primary');
+            
+            const file = e.dataTransfer.files[0];
+            if (file) processUpload(file);
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) processUpload(file);
+        }
+
+        // Click zone trigger helper
+        document.getElementById('dropZone').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        // Backend statement parser dispatcher
+        async function processUpload(file) {
+            const loader = document.getElementById('analyzerLoader');
+            const resultsBox = document.getElementById('analyzerResults');
+            
+            loader.classList.remove('hidden');
+            resultsBox.classList.add('hidden');
+            
+            try {
+                let textToAnalyze = "";
+                
+                if (file.name.endsWith('.pdf')) {
+                    // Extract text client-side using PDF.js text layer mapping
+                    const arrayBuffer = await file.arrayBuffer();
+                    textToAnalyze = await extractTextFromPDF(arrayBuffer);
+                } else {
+                    // Standard text/csv read
+                    textToAnalyze = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsText(file);
+                    });
+                }
+                
+                if (!textToAnalyze.trim()) {
+                    throw new Error("No readable text found in statement.");
+                }
+
+                const response = await fetch('http://127.0.0.1:5000/api/statement/run-analyzer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        statement_text: textToAnalyze,
+                        income: globalProfile.income
+                    })
+                });
+                
+                if (!response.ok) throw new Error("Backend statement analyzer encountered an error.");
+                
+                const data = await response.json();
+                renderAnalyzerOutput(data.result);
+                
+            } catch (err) {
+                console.error(err);
+                alert("Failed to analyze statement: " + err.message);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        // Client-side PDF Text Reader using PDF.js Core
+        async function extractTextFromPDF(pdfDataArrayBuffer) {
+            const pdf = await pdfjsLib.getDocument({ data: pdfDataArrayBuffer }).promise;
+            let text = "";
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                const strings = content.items.map(item => item.str);
+                text += strings.join(" ") + "\n";
+            }
+            return text;
+        }
+
+        // Render Classified transactions list and Chart graph
+        function renderAnalyzerOutput(res) {
+            const resultsBox = document.getElementById('analyzerResults');
+            resultsBox.classList.remove('hidden');
+            
+            const summary = res.summary;
+            document.getElementById('totalSpentVal').innerText = `₹${summary.total_spent.toFixed(2)}`;
+            document.getElementById('totalCreditVal').innerText = `₹${summary.total_received.toFixed(2)}`;
+            document.getElementById('transCountText').innerText = `${summary.transaction_count} items classified`;
+            
+            // Build recommendations list
+            const recsContainer = document.getElementById('analyzerRecsList');
+            recsContainer.innerHTML = '';
+            res.recommendations.forEach(r => {
+                recsContainer.insertAdjacentHTML('beforeend', `
+                    <li class="flex items-start gap-1.5 py-0.5">
+                        <i class="fas fa-chevron-right text-emerald-500 shrink-0 mt-0.5"></i>
+                        <span>${escapeHTML(r)}</span>
+                    </li>
+                `);
+            });
+            
+            // Build classified transactions table
+            const tableBody = document.getElementById('transTableBody');
+            tableBody.innerHTML = '';
+            
+            res.transactions.forEach(t => {
+                const isDebit = t.amount < 0;
+                tableBody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                        <td class="p-3 text-slate-400 font-mono">${escapeHTML(t.date || 'Pending')}</td>
+                        <td class="p-3 text-slate-200 font-medium font-mono">${escapeHTML(t.description)}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-350 border border-slate-700">${escapeHTML(t.category)}</span>
+                        </td>
+                        <td class="p-3 text-right font-bold font-mono ${isDebit ? 'text-red-400' : 'text-emerald-400'}">
+                            ${isDebit ? '' : '+'}${t.amount.toFixed(2)}
+                        </td>
+                    </tr>
+                `);
+            });
+
+            // Build dynamic Category Chart.js graph
+            const categories = Object.keys(summary.category_totals);
+            const totals = Object.values(summary.category_totals);
+            
+            if (categoryChartInstance) categoryChartInstance.destroy();
+            
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            categoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: totals,
+                        backgroundColor: [
+                            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
+                            '#8b5cf6', '#ec4899', '#64748b', '#14b8a6'
+                        ],
+                        borderWidth: 1,
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // --- Page 4: App Search Checker ---
+        function renderPresetAppTags() {
+            const container = document.getElementById('preset-apps-tags');
+            container.innerHTML = '';
+            PRESET_LOAN_APPS.forEach(app => {
+                container.insertAdjacentHTML('beforeend', `
+                    <button onclick="quickScanApp('${escapeHTML(app)}')" 
+                        class="bg-slate-850 border border-slate-750 hover:bg-slate-800 hover:border-orange-500/40 text-xs px-3 py-1.5 rounded-lg transition-all text-slate-300 font-semibold cursor-pointer">
+                        ${escapeHTML(app)}
+                    </button>
+                `);
+            });
+        }
+
+        function quickScanApp(name) {
+            document.getElementById('blacklistSearchInput').value = name;
+            checkAppBlacklist();
+        }
+
+        async function checkAppBlacklist() {
+            const input = document.getElementById('blacklistSearchInput');
+            const name = input.value.trim();
+            if (!name) {
+                alert("Enter an app name to scan.");
+                return;
+            }
+            
+            const results = document.getElementById('blacklistResultBox');
+            results.classList.remove('hidden');
+            results.innerHTML = `
+                <div class="flex items-center justify-center p-4">
+                    <div class="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            `;
+            
+            try {
+                // Call /api/crisis/detect with input name as search phrase
+                const response = await fetch('http://127.0.0.1:5000/api/crisis/detect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: name,
+                        income: 0,
+                        expenses: {},
+                        debt: 0
+                    })
+                });
+                
+                if (!response.ok) throw new Error("Search server failed.");
+                
+                const data = await response.json();
+                const matched = data.result.matched_apps;
+                
+                if (matched && matched.length > 0) {
+                    const app = matched[0];
+                    
+                    // Track alerts for PDF inclusion
+                    const warning = { app: app.app_name, risk: app.primary_risk, action: app.recommended_action };
+                    if (!sessionBlacklistWarnings.some(w => w.app === app.app_name)) {
+                        sessionBlacklistWarnings.push(warning);
+                        const badge = document.getElementById('blacklist-count-badge');
+                        badge.classList.remove('hidden');
+                        badge.innerText = sessionBlacklistWarnings.length;
+                    }
+                    
+                    results.innerHTML = `
+                        <div class="bg-red-950/40 border border-red-500/30 rounded-xl p-5 shadow-2xl space-y-4">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-skull text-3xl text-red-500 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h3 class="heading-font text-lg font-bold text-red-400">Predatory Warning: Blacklisted Application Match</h3>
+                                    <p class="text-xs text-slate-300 font-mono mt-0.5">Target Identity: <strong>${escapeHTML(app.app_name)}</strong></p>
+                                </div>
+                            </div>
+                            
+                            <hr class="border-red-500/20">
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <p class="font-bold text-red-450 uppercase mb-1">Identified Recovery Risk</p>
+                                    <p class="text-slate-200 leading-relaxed p-2.5 bg-slate-950/60 rounded">${escapeHTML(app.primary_risk)}</p>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-red-450 uppercase mb-1">Recommended Response</p>
+                                    <p class="text-slate-200 leading-relaxed p-2.5 bg-slate-950/60 rounded">${escapeHTML(app.recommended_action)}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-slate-950/50 p-3 rounded-lg flex items-center justify-between text-xs border border-red-500/10">
+                                <span class="text-slate-400">Threat reported to active context. Support helplines loaded in Chat.</span>
+                                <button onclick="switchTab('chat')" class="bg-red-900/80 hover:bg-red-800 text-white px-3 py-1.5 rounded font-semibold transition-all">Go to Chat Help</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    results.innerHTML = `
+                        <div class="bg-emerald-950/30 border border-emerald-500/20 rounded-xl p-5 shadow-lg flex items-start gap-4">
+                            <i class="fas fa-shield-halved text-emerald-400 text-3xl shrink-0 mt-0.5"></i>
+                            <div>
+                                <h3 class="heading-font text-md font-bold text-emerald-400">Platform Scan: No Predatory Threat Matches</h3>
+                                <p class="text-xs text-slate-300 leading-relaxed mt-1">"${escapeHTML(name)}" is not flagged in our active Hinglish loan app blacklist database. However, before signing micro-credit, ensure the app lists a registered NBFC partner approved by RBI.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+            } catch (err) {
+                console.error(err);
+                results.innerHTML = `<p class="text-xs text-red-400 p-4">Error executing threats checker scan.</p>`;
+            }
+        }
+
+        // --- Page 5: Goal Optimizer ---
+        async function addGoal(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('goalName');
+            const amountInput = document.getElementById('goalAmount');
+            const monthsInput = document.getElementById('goalMonths');
+            
+            const gName = nameInput.value.trim();
+            const gCost = parseFloat(amountInput.value) || 0;
+            const gMonths = parseInt(monthsInput.value) || 0;
+            
+            if (!gName || gCost <= 0 || gMonths <= 0) {
+                alert("Goal values are invalid.");
+                return;
+            }
+
+            nameInput.value = '';
+            amountInput.value = '';
+            monthsInput.value = '';
+            
+            const newGoal = {
+                name: gName,
+                present_cost: gCost,
+                months: gMonths,
+                current_savings: globalProfile.savings
+            };
+            
+            activeGoals.push(newGoal);
+            await calculateGoalOptimizations();
+            showToast(`Financial goal "${gName}" added!`);
+        }
+
+        async function calculateGoalOptimizations() {
+            const list = document.getElementById('goalsList');
+            const empty = document.getElementById('goalsEmptyState');
+            
+            if (activeGoals.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            list.innerHTML = `
+                <div class="col-span-1 md:col-span-2 flex items-center justify-center p-6">
+                    <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            `;
+            
+            try {
+                // Call /api/goals/optimize
+                const response = await fetch('http://127.0.0.1:5000/api/goals/optimize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        annual_inflation: 0.05,
+                        investment_return: 0.08,
+                        goals: activeGoals
+                    })
+                });
+                
+                if (!response.ok) throw new Error("Optimize API failed.");
+                
+                const data = await response.json();
+                const results = data.result;
+                
+                list.innerHTML = '';
+                results.forEach((opt, idx) => {
+                    const original = activeGoals[idx];
+                    
+                    // Progress calculations
+                    const progress = Math.min((globalProfile.savings / opt.future_value) * 100, 100).toFixed(0);
+                    
+                    list.insertAdjacentHTML('beforeend', `
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="heading-font text-md font-bold text-white">${escapeHTML(original.name)}</h4>
+                                    <span class="text-[9px] text-slate-500 uppercase tracking-widest font-semibold">${original.months} Months Target</span>
+                                </div>
+                                <button onclick="deleteGoal(${idx})" class="text-slate-500 hover:text-red-400 p-1.5 transition-colors cursor-pointer">
+                                    <i class="fas fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                            
+                            <hr class="border-slate-800 mb-4">
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-4 text-xs font-mono">
+                                <div>
+                                    <span class="text-[10px] text-slate-500 uppercase font-sans font-semibold">Cost Today</span>
+                                    <p class="font-bold text-slate-200">₹${original.present_cost.toFixed(0)}</p>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-500 uppercase font-sans font-semibold">Inflation Adjusted (5%)</span>
+                                    <p class="font-bold text-slate-200">₹${opt.future_value.toFixed(0)}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="flex justify-between text-[10px] font-semibold text-slate-400 mb-1">
+                                    <span>Goal Progress</span>
+                                    <span>${progress}%</span>
+                                </div>
+                                <div class="h-2 w-full bg-slate-850 rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-slate-950 p-3 rounded-xl flex items-center justify-between text-xs border border-slate-800">
+                                <span class="text-slate-400">Required Monthly Save (8% ROI)</span>
+                                <span class="font-bold text-primary font-mono">₹${opt.monthly_savings_needed.toFixed(0)}/mo</span>
+                            </div>
+                        </div>
+                    `);
+                });
+                
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = `<p class="text-xs text-red-400 p-4">Error calculating targets.</p>`;
+            }
+        }
+
+        function deleteGoal(idx) {
+            activeGoals.splice(idx, 1);
+            calculateGoalOptimizations();
+            showToast("Goal removed.");
+        }
+
+        // --- Page 6: Government Schemes Matching ---
+        async function loadGovtSchemes() {
+            const list = document.getElementById('schemesList');
+            const empty = document.getElementById('schemesEmptyState');
+            
+            // Mandatory profile parameters verification
+            if (globalProfile.income <= 0 || !globalProfile.occupation) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            list.innerHTML = `
+                <div class="col-span-1 sm:col-span-2 flex items-center justify-center p-6">
+                    <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            `;
+            
+            try {
+                // Call /api/schemes/get-relevant
+                const response = await fetch('http://127.0.0.1:5000/api/schemes/get-relevant', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user: {
+                            age: globalProfile.age,
+                            gender: globalProfile.gender,
+                            income: globalProfile.income,
+                            state: globalProfile.state,
+                            occupation: globalProfile.occupation
+                        }
+                    })
+                });
+                
+                if (!response.ok) throw new Error("Schemes API failed.");
+                
+                const data = await response.json();
+                const matched = data.schemes;
+                
+                list.innerHTML = '';
+                if (matched.length === 0) {
+                    list.innerHTML = `
+                        <div class="col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center text-xs text-slate-400 shadow-xl">
+                            No government schemes matched this specific combination of variables.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                matched.forEach(s => {
+                    list.insertAdjacentHTML('beforeend', `
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden flex flex-col justify-between group hover:border-slate-600 transition-all duration-300">
+                            <div>
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="text-2xl">${s.emoji || '🏛️'}</span>
+                                        <h4 class="heading-font text-sm font-bold text-white leading-tight">${escapeHTML(s.name)}</h4>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-primary/20 text-primary border border-primary/20">
+                                        Match: ${s.eligibility_score.toFixed(0)}%
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-400 leading-relaxed mb-4">${escapeHTML(s.description)}</p>
+                                
+                                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-850 text-[11px] mb-4 flex justify-between font-semibold text-emerald-450 leading-relaxed">
+                                    <span class="font-normal text-slate-450">Matched Benefit:</span>
+                                    <span>${escapeHTML(s.benefit)}</span>
+                                </div>
+                            </div>
+                            
+                            <a href="${escapeHTML(s.link)}" target="_blank" 
+                                class="w-full bg-slate-850 hover:bg-slate-800 border border-slate-750 text-slate-200 hover:text-white font-semibold py-2 rounded-xl text-center text-xs transition-all flex items-center justify-center gap-1.5">
+                                <span>Apply via Portal</span> <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
+                    `);
+                });
+                
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = `<p class="text-xs text-red-400 p-4">Error loading schemes.</p>`;
+            }
+        }
+
+        // --- Page 7: Side Income suggestions ---
+        async function loadSideEarningSuggestions() {
+            const list = document.getElementById('earnList');
+            const empty = document.getElementById('earnEmptyState');
+            
+            // Skills checklist check
+            if (globalProfile.skills.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            list.innerHTML = `
+                <div class="col-span-1 sm:col-span-2 flex items-center justify-center p-6">
+                    <div class="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            `;
+            
+            try {
+                // Call /api/earn/suggest
+                const response = await fetch('http://127.0.0.1:5000/api/earn/suggest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_profile: {
+                            age: globalProfile.age,
+                            skills: globalProfile.skills
+                        }
+                    })
+                });
+                
+                if (!response.ok) throw new Error("Earning suggest API failed.");
+                
+                const data = await response.json();
+                const matched = data.result;
+                
+                list.innerHTML = '';
+                matched.forEach(idea => {
+                    const trendBadge = idea.trending ? `<span class="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-orange-950 text-orange-450 border border-orange-500/20 animate-pulse">🔥 Trending</span>` : '';
+                    
+                    list.insertAdjacentHTML('beforeend', `
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden flex flex-col justify-between hover:border-slate-600 transition-all duration-300">
+                            <div>
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="text-2xl">${idea.emoji || '💻'}</span>
+                                        <h4 class="heading-font text-sm font-bold text-white leading-tight">${escapeHTML(idea.title)}</h4>
+                                    </div>
+                                    ${trendBadge}
+                                </div>
+                                <p class="text-xs text-slate-400 leading-relaxed mb-4">${escapeHTML(idea.description)}</p>
+                                
+                                <div class="grid grid-cols-2 gap-3 text-xs mb-4">
+                                    <div class="bg-slate-950 p-2 rounded-lg border border-slate-850">
+                                        <span class="text-[9px] text-slate-500 uppercase font-semibold block">Earning Potential</span>
+                                        <span class="font-bold text-emerald-450">${escapeHTML(idea.earning)}</span>
+                                    </div>
+                                    <div class="bg-slate-950 p-2 rounded-lg border border-slate-850">
+                                        <span class="text-[9px] text-slate-500 uppercase font-semibold block">Difficulty Tier</span>
+                                        <span class="font-bold text-accent capitalize">${escapeHTML(idea.tier)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-slate-950/50 p-2.5 rounded-xl border border-slate-850 text-[10px] flex items-center justify-between">
+                                <span class="text-slate-500 font-semibold uppercase">Platform:</span>
+                                <span class="text-slate-300 font-semibold font-mono truncate max-w-[200px]">${escapeHTML(idea.platform)}</span>
+                            </div>
+                        </div>
+                    `);
+                });
+                
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = `<p class="text-xs text-red-400 p-4">Error loading earning plans.</p>`;
             }
         }
     </script>
