@@ -12,5 +12,12 @@
         "savings_rate": 0.0,
         "health_score": 50,
         "saved_at": "2026-05-20T13:11:57.191392"
+    },
+    "fp_2ae18cf0f98c3c89d772c651d14b3b2b": {
+        "income": 25000.0,
+        "expenses": 15000.0,
+        "savings_rate": 40.0,
+        "health_score": 60,
+        "saved_at": "2026-05-20T16:41:01.168858"
     }
 }

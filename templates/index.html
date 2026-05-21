@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+    <base href="http://localhost:5000/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Youth Financial Guardian Dashboard</title>
+    <!-- Firebase & FingerprintJS -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,9 +84,38 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
+
+        @media (max-width: 768px) {
+          #sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 100vh;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+          }
+          #sidebar.open {
+            transform: translateX(0);
+          }
+          #sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 998;
+          }
+          #sidebar-overlay.open {
+            display: block;
+          }
+          #main-content {
+            margin-left: 0 !important;
+          }
+          #hamburger { display: block !important; }
+        }
     </style>
 </head>
 <body class="text-slate-100 h-screen overflow-hidden flex flex-col md:flex-row relative">
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
 
     <!-- Crisis Overlay (Full Screen) -->
     <div id="crisisOverlay" class="fixed inset-0 bg-red-950/95 z-50 hidden flex-col items-center justify-center p-6 text-center backdrop-blur-md">
@@ -113,52 +147,6 @@
         </button>
     </div>
 
-    <!-- Auth / OTP Modal -->
-    <div id="authModal" class="hidden fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-md">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
-            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-            
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                    <i class="fas fa-key text-primary text-xl"></i>
-                </div>
-                <div>
-                    <h2 class="heading-font text-xl font-bold text-white">Save Profile Securely</h2>
-                    <p class="text-xs text-slate-400">Secure 10-digit Indian Mobile OTP Lock</p>
-                </div>
-            </div>
-            
-            <hr class="border-slate-800 mb-6">
-            
-            <!-- Phone Input Step -->
-            <div id="stepPhone">
-                <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Enter Mobile Number</label>
-                <div class="flex gap-2 mb-4">
-                    <span class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-3 text-slate-300 font-semibold flex items-center">+91</span>
-                    <input type="text" id="inputPhone" placeholder="9988776655" maxlength="10" 
-                        class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary font-mono text-lg tracking-wider">
-                </div>
-                <p class="text-xs text-slate-400 mb-6">We will send a 6-digit OTP verification code to this number. No passwords required.</p>
-                <button onclick="requestOTP()" id="btnSendOtp" class="w-full bg-primary hover:bg-primaryDark text-white py-3 rounded-xl font-semibold transition-all transform active:scale-95 flex items-center justify-center gap-2">
-                    <span>Send Verification Code</span> <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-            
-            <!-- OTP Input Step -->
-            <div id="stepOtp" class="hidden">
-                <p class="text-sm text-emerald-400 mb-4 bg-emerald-950/30 border border-emerald-500/20 px-3 py-2 rounded-lg" id="otpSuccessMsg"></p>
-                <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Enter 6-Digit OTP</label>
-                <input type="text" id="inputOtp" placeholder="••••••" maxlength="6" 
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary tracking-widest text-center text-2xl font-mono mb-4">
-                <button onclick="verifyOTP()" id="btnVerifyOtp" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-semibold transition-all transform active:scale-95 flex items-center justify-center gap-2">
-                    <i class="fas fa-check-circle"></i> <span>Verify & Save Profile</span>
-                </button>
-                <button onclick="showStepPhone()" class="w-full mt-3 text-xs text-slate-400 hover:text-white transition-colors underline text-center block">Change phone number</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-4 right-4 translate-y-20 opacity-0 bg-emerald-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 z-50 border border-emerald-400/20">
@@ -167,7 +155,7 @@
     </div>
 
     <!-- Left Sidebar for Navigation (Desktop) -->
-    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 hidden md:flex z-15 shadow-xl">
+    <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 z-15 shadow-xl">
         <div class="flex flex-col">
             <!-- Header Brand -->
             <div class="p-6 flex items-center gap-3">
@@ -216,108 +204,89 @@
                     <i class="fas fa-laptop-code text-lg w-6"></i>
                     <span>Earn Suggester</span>
                 </button>
+            
+                <div style="padding: 16px; border-top: 1px solid #334155; margin-top: 16px;">
+                  <p style="color:#64748b; font-size:11px; margin-bottom:8px;">
+                    LANGUAGE
+                  </p>
+                  <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button onclick="setLang('english')" 
+                      style="background:#1e293b; color:#94a3b8; border:1px solid #334155; 
+                      padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;">
+                      EN
+                    </button>
+                    <button onclick="setLang('hindi')" 
+                      style="background:#1e293b; color:#94a3b8; border:1px solid #334155; 
+                      padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;">
+                      हिंदी
+                    </button>
+                    <button onclick="setLang('telugu')" 
+                      style="background:#1e293b; color:#94a3b8; border:1px solid #334155; 
+                      padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;">
+                      తెలుగు
+                    </button>
+                    <button onclick="setLang('tamil')" 
+                      style="background:#1e293b; color:#94a3b8; border:1px solid #334155; 
+                      padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;">
+                      தமிழ்
+                    </button>
+                  </div>
+                </div>
             </nav>
         </div>
-        
-        <!-- Sidebar Footer -->
-        <div class="p-4 bg-slate-950/40 border-t border-slate-800/80">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
-                    <i class="fas fa-user-shield text-slate-400 text-xs"></i>
-                </div>
-                <div class="truncate">
-                    <p class="text-xs font-semibold text-slate-300" id="sidebar-user-id">Guest Account</p>
-                    <span class="text-[9px] text-slate-500 bg-slate-800 px-1 py-0.5 rounded">Not Verified</span>
-                </div>
-            </div>
-            <button onclick="openAuthModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 hover:text-white rounded-lg transition-all flex items-center justify-center gap-1.5">
-                <i class="fas fa-lock"></i> <span>Lock Account (OTP)</span>
-            </button>
-        </div>
+        <!-- Sidebar Footer Removed -->
     </aside>
 
-    <!-- Top Mobile Navbar -->
-    <div class="md:hidden bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0 shadow-lg">
-        <div class="flex items-center gap-2">
-            <i class="fas fa-shield-halved text-blue-500 text-2xl"></i>
-            <h1 class="heading-font font-bold text-lg text-white">YFG Guardian</h1>
-        </div>
-        
-        <!-- Toggle button -->
-        <button onclick="toggleMobileMenu()" class="text-slate-300 hover:text-white p-2">
-            <i class="fas fa-bars text-xl" id="menu-icon"></i>
-        </button>
-    </div>
-
-    <!-- Mobile Navigation Drawer -->
-    <div id="mobile-menu" class="hidden absolute top-[53px] inset-x-0 bg-slate-900 border-b border-slate-850 p-4 z-40 shadow-2xl flex-col gap-2 transition-all duration-300 md:hidden">
-        <button onclick="switchTab('dashboard'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
-            <i class="fas fa-chart-pie text-lg w-6"></i>
-            <span>Dashboard</span>
-        </button>
-        <button onclick="switchTab('chat'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
-            <i class="fas fa-comment-dots text-lg w-6"></i>
-            <span>Guardian Chat</span>
-        </button>
-        <button onclick="switchTab('analyzer'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
-            <i class="fas fa-file-invoice-dollar text-lg w-6"></i>
-            <span>Statement Analyzer</span>
-        </button>
-        <button onclick="switchTab('blacklist'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
-            <i class="fas fa-shield-virus text-lg w-6"></i>
-            <span>Loan App Checker</span>
-        </button>
-        <button onclick="switchTab('goals'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
-            <i class="fas fa-bullseye text-lg w-6"></i>
-            <span>Goal Tracker</span>
-        </button>
-        <button onclick="switchTab('schemes'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
-            <i class="fas fa-university text-lg w-6"></i>
-            <span>Govt Schemes</span>
-        </button>
-        <button onclick="switchTab('earn'); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800">
-            <i class="fas fa-laptop-code text-lg w-6"></i>
-            <span>Earn Suggester</span>
-        </button>
-        <hr class="border-slate-800 my-2">
-        <button onclick="openAuthModal(); toggleMobileMenu();" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded-lg flex items-center justify-center gap-2">
-            <i class="fas fa-lock"></i> <span>Lock Account (OTP)</span>
-        </button>
-    </div>
-
     <!-- Main Content Container -->
-    <main class="flex-1 flex flex-col overflow-hidden bg-slate-950 relative h-full">
+    <main id="main-content" class="flex-1 flex flex-col overflow-hidden bg-slate-950 relative h-full">
         <!-- Top Toolbar Header -->
         <header class="bg-slate-900/60 border-b border-slate-800/80 p-4 flex justify-between items-center z-10 shrink-0 shadow-md">
-            <div>
-                <h1 class="heading-font text-lg font-bold text-white flex items-center gap-2">
-                    <span id="active-tab-title">Financial Health Dashboard</span>
-                </h1>
-                <p class="text-xs text-slate-400 hidden sm:block">Youth financial support and protection portal</p>
+            <div class="flex items-center gap-3 w-1/3">
+                <button id="hamburger" onclick="toggleSidebar()" 
+                  style="background:transparent; border:none; color:white; 
+                  font-size:22px; cursor:pointer; padding:4px 8px;
+                  display:none;">
+                  ☰
+                </button>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-shield-halved text-blue-500 text-2xl hidden md:block"></i>
+                    <h1 class="heading-font font-bold text-lg text-white hidden md:block">YFG Guardian</h1>
+                </div>
             </div>
             
-            <div class="flex items-center gap-3">
-                <button onclick="downloadReport()" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-550 hover:to-teal-450 text-white font-semibold rounded-lg text-xs transition-all shadow-lg flex items-center gap-1.5 transform hover:scale-[1.02] active:scale-[0.98]">
-                    <i class="fas fa-file-pdf"></i>
-                    <span>Report</span>
-                </button>
-                <button onclick="openAuthModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs transition-all shadow-lg flex items-center gap-1.5 transform hover:scale-[1.02] active:scale-[0.98]">
-                    <i class="fas fa-save"></i>
-                    <span id="btn-save-text">Save Profile</span>
-                </button>
-                
-                <!-- Language Toggles -->
-                <div class="flex bg-slate-800 rounded-lg p-0.5 overflow-x-auto text-[10px] shadow-inner border border-slate-700">
-                    <button onclick="setLang('english')" id="btn-lang-english" class="lang-btn px-2 py-1 rounded bg-primary text-white font-bold transition-all">EN</button>
-                    <button onclick="setLang('hindi')" id="btn-lang-hindi" class="lang-btn px-2 py-1 rounded text-slate-400 hover:text-white transition-all">हिं</button>
-                    <button onclick="setLang('telugu')" id="btn-lang-telugu" class="lang-btn px-2 py-1 rounded text-slate-400 hover:text-white transition-all">తె</button>
-                    <button onclick="setLang('tamil')" id="btn-lang-tamil" class="lang-btn px-2 py-1 rounded text-slate-400 hover:text-white transition-all">த</button>
+            <div class="w-1/3 text-center flex justify-center">
+                <h1 class="heading-font text-lg font-bold text-white flex items-center justify-center gap-2">
+                    <span id="active-tab-title">Financial Health Dashboard</span>
+                </h1>
+            </div>
+            
+            <div class="flex items-center gap-3 w-1/3 justify-end">
+                <div id="auth-section" style="display:flex; align-items:center; gap:12px;">
+                  <div id="guest-ui">
+                    <button onclick="signInWithGoogle()" 
+                      style="background:#4285F4; color:white; border:none; 
+                      padding:8px 16px; border-radius:6px; cursor:pointer; 
+                      font-size:13px; display:flex; align-items:center; gap:8px;">
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                        width="16" height="16"/>
+                      <span class="hidden sm:inline">Sign in with Google</span>
+                    </button>
+                  </div>
+                  <div id="google-ui" style="display:none; align-items:center; gap:10px;">
+                    <img id="user-photo" src="" width="32" height="32" 
+                      style="border-radius:50%; border:2px solid #4285F4;"/>
+                    <button onclick="signOut()" 
+                      style="background:transparent; color:#94a3b8; border:1px solid #334155; 
+                      padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;">
+                      Sign Out
+                    </button>
+                  </div>
                 </div>
             </div>
         </header>
 
         <!-- Page View Container (Pages are toggled via JS) -->
-        <div id="view-container" class="flex-1 overflow-y-auto p-4 md:p-6 w-full relative">
+        <div id="view-container" class="flex-1 overflow-y-auto p-4 md:p-6 w-full relative" style="padding-bottom: 80px;">
             
             <!-- VIEW 1: DASHBOARD -->
             <section id="view-dashboard" class="page-view flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto w-full">
@@ -745,28 +714,146 @@
             <!-- VIEW 7: EARN SUGGESTER -->
             <section id="view-earn" class="page-view hidden max-w-4xl mx-auto w-full space-y-6">
                 <!-- Page Top Info -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl">
-                    <h2 class="heading-font text-xl font-bold text-white mb-1"><i class="fas fa-laptop-code text-accent mr-2"></i> Side Income & Micro-Gig Suggestions</h2>
-                    <p class="text-xs text-slate-400">Discover handpicked, trending side hustles, zero-investment micro-gigs, and gig platforms tailored to your specific age and skills checklist.</p>
-                </div>
-                
-                <!-- Empty State for Earn Suggestions -->
-                <div id="earnEmptyState" class="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center space-y-4 shadow-xl">
-                    <div class="w-16 h-16 rounded-full bg-slate-850/50 flex items-center justify-center mx-auto text-slate-550">
-                        <i class="fas fa-laptop-house text-3xl"></i>
-                    </div>
-                    <div class="max-w-sm mx-auto">
-                        <p class="text-sm font-bold text-slate-200">No Earning Skills Selected</p>
-                        <p class="text-xs text-slate-400 mt-1">Earning suggestions are mapped directly to your age and specific coding, writing, video editing, or design skills. Go to the Home Dashboard to pick items first.</p>
-                    </div>
-                    <button onclick="switchTab('dashboard')" class="px-6 py-2.5 bg-accent hover:bg-accentDark text-xs font-semibold text-white rounded-xl transition-all shadow-md transform hover:scale-[1.02] active:scale-[0.98]">
-                        Add Skills in Profile
+                <div style="padding: 20px; max-width: 900px; margin: 0 auto;">
+
+                  <!-- Header -->
+                  <div style="margin-bottom: 24px;">
+                    <h2 style="color:#e2e8f0; font-size:22px; font-weight:700; margin:0;">
+                      🚀 Smart Task Feed
+                    </h2>
+                    <p style="color:#64748b; margin:6px 0 0 0; font-size:14px;">
+                      Real tasks from real platforms — matched to your skills
+                    </p>
+                  </div>
+
+                  <!-- Filter Tabs -->
+                  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
+                    <button onclick="filterTasks('all')" id="tab-all"
+                      class="task-tab active-tab"
+                      style="padding:8px 16px; border-radius:20px; border:none; 
+                      cursor:pointer; font-size:13px; font-weight:600;
+                      background:#3b82f6; color:white;">
+                      All Tasks
                     </button>
-                </div>
-                
-                <!-- Earning Suggestions Grid -->
-                <div id="earnList" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Populated dynamically via triggerRecalculate() -->
+                    <button onclick="filterTasks('surveys')" id="tab-surveys"
+                      class="task-tab"
+                      style="padding:8px 16px; border-radius:20px; border:1px solid #334155; 
+                      cursor:pointer; font-size:13px; background:transparent; color:#94a3b8;">
+                      📊 Surveys
+                    </button>
+                    <button onclick="filterTasks('social')" id="tab-social"
+                      class="task-tab"
+                      style="padding:8px 16px; border-radius:20px; border:1px solid #334155; 
+                      cursor:pointer; font-size:13px; background:transparent; color:#94a3b8;">
+                      📱 Social Media
+                    </button>
+                    <button onclick="filterTasks('freelance')" id="tab-freelance"
+                      class="task-tab"
+                      style="padding:8px 16px; border-radius:20px; border:1px solid #334155; 
+                      cursor:pointer; font-size:13px; background:transparent; color:#94a3b8;">
+                      💼 Freelance
+                    </button>
+                    <button onclick="filterTasks('referral')" id="tab-referral"
+                      class="task-tab"
+                      style="padding:8px 16px; border-radius:20px; border:1px solid #334155; 
+                      cursor:pointer; font-size:13px; background:transparent; color:#94a3b8;">
+                      🔗 Referrals
+                    </button>
+                  </div>
+
+                  <!-- Earnings Summary Bar -->
+                  <div id="earnings-summary" style="
+                    background: linear-gradient(135deg, #1e3a5f, #1e293b);
+                    border: 1px solid #3b82f6;
+                    border-radius: 12px;
+                    padding: 16px 20px;
+                    margin-bottom: 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                  ">
+                    <div>
+                      <p style="color:#64748b; font-size:11px; margin:0;">
+                        THIS MONTH TRACKED
+                      </p>
+                      <p id="total-earned-display" style="
+                        color:#10b981; font-size:24px; font-weight:700; margin:4px 0 0 0;">
+                        ₹0
+                      </p>
+                    </div>
+                    <div style="text-align:center;">
+                      <p style="color:#64748b; font-size:11px; margin:0;">TASKS LOGGED</p>
+                      <p id="tasks-logged-display" style="
+                        color:#e2e8f0; font-size:24px; font-weight:700; margin:4px 0 0 0;">
+                        0
+                      </p>
+                    </div>
+                    <button onclick="showEarningsLogger()" style="
+                      background:#3b82f6; color:white; border:none;
+                      padding:10px 18px; border-radius:8px;
+                      cursor:pointer; font-size:13px; font-weight:600;">
+                      + Log Earning
+                    </button>
+                  </div>
+
+                  <!-- Task Cards Grid -->
+                  <div id="task-cards-grid" style="
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                    gap: 16px;
+                  ">
+                    <div style="color:#64748b; text-align:center; padding:40px; 
+                      grid-column: 1/-1;">
+                      Loading tasks...
+                    </div>
+                  </div>
+
+                  <!-- Earnings Logger Modal -->
+                  <div id="earnings-logger-modal" style="
+                    display:none; position:fixed; inset:0;
+                    background:rgba(0,0,0,0.7); z-index:2000;
+                    align-items:center; justify-content:center;
+                  ">
+                    <div style="
+                      background:#1e293b; border:1px solid #334155;
+                      border-radius:16px; padding:24px;
+                      width:90%; max-width:400px;
+                    ">
+                      <h3 style="color:#e2e8f0; margin:0 0 20px 0;">
+                        💰 Log Your Earning
+                      </h3>
+                      <input id="log-platform" placeholder="Platform (e.g. Fiverr)" 
+                        style="width:100%; padding:10px; background:#0f172a; 
+                        border:1px solid #334155; border-radius:8px; 
+                        color:#e2e8f0; margin-bottom:12px; box-sizing:border-box;"/>
+                      <input id="log-task" placeholder="Task description" 
+                        style="width:100%; padding:10px; background:#0f172a; 
+                        border:1px solid #334155; border-radius:8px; 
+                        color:#e2e8f0; margin-bottom:12px; box-sizing:border-box;"/>
+                      <input id="log-amount" placeholder="Amount earned (₹)" 
+                        type="number"
+                        style="width:100%; padding:10px; background:#0f172a; 
+                        border:1px solid #334155; border-radius:8px; 
+                        color:#e2e8f0; margin-bottom:20px; box-sizing:border-box;"/>
+                      <div style="display:flex; gap:10px;">
+                        <button onclick="saveEarningLog()" style="
+                          flex:1; background:#10b981; color:white; border:none;
+                          padding:12px; border-radius:8px; cursor:pointer;
+                          font-weight:600;">
+                          Save ✓
+                        </button>
+                        <button onclick="hideEarningsLogger()" style="
+                          flex:1; background:transparent; color:#94a3b8; 
+                          border:1px solid #334155;
+                          padding:12px; border-radius:8px; cursor:pointer;">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
             </section>
             
@@ -868,6 +955,9 @@
             if (tabId === 'chat') {
                 setTimeout(scrollToBottom, 100);
             }
+            if (tabId === 'earn') {
+                loadTaskFeed();
+            }
         }
 
         // Sync Global Profile Dict from Form Input elements
@@ -915,7 +1005,7 @@
             
             try {
                 // Call /api/finance/calculate
-                const response = await fetch('http://127.0.0.1:5000/api/finance/calculate', {
+                const response = await fetch('/api/finance/calculate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1021,7 +1111,7 @@
 
                 // Trigger loading corresponding items for other tabs dynamically
                 loadGovtSchemes();
-                loadSideEarningSuggestions();
+                loadTaskFeed();
                 
             } catch (err) {
                 console.error(err);
@@ -1205,7 +1295,7 @@
 
             // 3. Dispatch API
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/chat', {
+                const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -1276,7 +1366,7 @@
                     blacklist_warnings: sessionBlacklistWarnings
                 };
                 
-                const response = await fetch('http://127.0.0.1:5000/api/report/generate', {
+                const response = await fetch('/api/report/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -1300,33 +1390,6 @@
             }
         }
 
-        // --- OTP Profile Lock Mechanisms ---
-        const authModal = document.getElementById('authModal');
-        const stepPhone = document.getElementById('stepPhone');
-        const stepOtp = document.getElementById('stepOtp');
-        const inputPhone = document.getElementById('inputPhone');
-        const inputOtp = document.getElementById('inputOtp');
-        const otpSuccessMsg = document.getElementById('otpSuccessMsg');
-        
-        let pendingPhone = "";
-
-        function openAuthModal() {
-            authModal.classList.remove('hidden');
-            stepPhone.classList.remove('hidden');
-            stepOtp.classList.add('hidden');
-            inputPhone.value = '';
-            inputOtp.value = '';
-        }
-
-        function closeAuthModal() {
-            authModal.classList.add('hidden');
-        }
-
-        function showStepPhone() {
-            stepPhone.classList.remove('hidden');
-            stepOtp.classList.add('hidden');
-        }
-
         function showToast(message) {
             const toast = document.getElementById('toast');
             document.getElementById('toastMsg').innerText = message;
@@ -1336,83 +1399,17 @@
             }, 3000);
         }
 
-        async function requestOTP() {
-            const phone = inputPhone.value.trim();
-            if (phone.length !== 10 || isNaN(phone)) {
-                alert("Please supply a valid 10-digit Indian mobile number.");
-                return;
-            }
-            
-            const btn = document.getElementById('btnSendOtp');
-            btn.innerText = "Generating Session...";
-            btn.disabled = true;
-
-            try {
-                const response = await fetch('http://127.0.0.1:5000/api/mobile-auth/send-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: phone })
-                });
-                const data = await response.json();
-                
-                if (!response.ok) throw new Error(data.error || "Failed to send OTP code");
-                
-                pendingPhone = phone;
-                stepPhone.classList.add('hidden');
-                stepOtp.classList.remove('hidden');
-                
-                // Dev environment bypass notification
-                otpSuccessMsg.innerText = `OTP code dispatched! (Development OTP Code: ${data.otp})`;
-                
-            } catch (err) {
-                alert(err.message);
-            } finally {
-                btn.innerText = "Send Verification Code";
-                btn.disabled = false;
-            }
-        }
-
-        async function verifyOTP() {
-            const otp = inputOtp.value.trim();
-            if (otp.length !== 6) {
-                alert("Verify code is a 6-digit number.");
-                return;
-            }
-
-            const btn = document.getElementById('btnVerifyOtp');
-            btn.innerText = "Authenticating...";
-            btn.disabled = true;
-
-            try {
-                const response = await fetch('http://127.0.0.1:5000/api/mobile-auth/verify-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone: pendingPhone, otp: otp })
-                });
-                const data = await response.json();
-                
-                if (!response.ok) throw new Error(data.error || "Verification failed");
-                
-                await executeSaveProfile(data.user_id);
-                
-            } catch (err) {
-                alert(err.message);
-                btn.innerText = "Verify & Save Profile";
-                btn.disabled = false;
-            }
-        }
-
-        async function executeSaveProfile(userId) {
+        async function executeSaveProfile() {
             try {
                 const payload = {
-                    user_id: userId,
+                    user_id: window.currentUserId,
                     income: globalProfile.income,
                     expenses: globalProfile.expenses,
                     savings_rate: (globalProfile.income > 0) ? ((globalProfile.income - globalProfile.expenses) / globalProfile.income) * 100 : 0,
                     total_debt: globalProfile.debt
                 };
                 
-                const response = await fetch('http://127.0.0.1:5000/api/save-profile', {
+                const response = await fetch('/api/save-profile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -1421,17 +1418,10 @@
                 
                 if (!response.ok) throw new Error(data.error || "Saving operation failed");
                 
-                closeAuthModal();
                 showToast(`Profile securely stored! Health Score calculated: ${data.health_score}/100`);
-                
-                // Update UI text
-                document.getElementById('sidebar-user-id').innerText = `+91 ${userId.substring(0, 3)}••••${userId.substring(7)}`;
-                document.getElementById('btn-save-text').innerText = "Update Lock";
                 
             } catch (err) {
                 alert(err.message);
-                document.getElementById('btnVerifyOtp').innerText = "Verify & Save Profile";
-                document.getElementById('btnVerifyOtp').disabled = false;
             }
         }
 
@@ -1483,7 +1473,7 @@
                     throw new Error("No readable text found in statement.");
                 }
 
-                const response = await fetch('http://127.0.0.1:5000/api/statement/run-analyzer', {
+                const response = await fetch('/api/statement/run-analyzer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1631,7 +1621,7 @@
             
             try {
                 // Call /api/crisis/detect with input name as search phrase
-                const response = await fetch('http://127.0.0.1:5000/api/crisis/detect', {
+                const response = await fetch('/api/crisis/detect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1757,7 +1747,7 @@
             
             try {
                 // Call /api/goals/optimize
-                const response = await fetch('http://127.0.0.1:5000/api/goals/optimize', {
+                const response = await fetch('/api/goals/optimize', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1855,7 +1845,7 @@
             
             try {
                 // Call /api/schemes/get-relevant
-                const response = await fetch('http://127.0.0.1:5000/api/schemes/get-relevant', {
+                const response = await fetch('/api/schemes/get-relevant', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1919,84 +1909,304 @@
             }
         }
 
-        // --- Page 7: Side Income suggestions ---
-        async function loadSideEarningSuggestions() {
-            const list = document.getElementById('earnList');
-            const empty = document.getElementById('earnEmptyState');
-            
-            // Skills checklist check
-            if (globalProfile.skills.length === 0) {
-                list.innerHTML = '';
-                empty.classList.remove('hidden');
-                return;
+        // ── Task Feed State ────────────────────────────────────────
+        let allTasks = [];
+        let currentFilter = 'all';
+        let earningLogs = JSON.parse(
+          localStorage.getItem('yfg_earnings') || '[]'
+        );
+
+        // Get current profile
+        function getCurrentProfile() {
+            return {
+                skills: globalProfile.skills || [],
+                age: globalProfile.age || 18,
+                state: globalProfile.state || 'India'
+            };
+        }
+
+        // ── Load Task Feed ─────────────────────────────────────────
+        async function loadTaskFeed() {
+          const profile = getCurrentProfile();
+          try {
+            const res = await fetch('/api/earn/task-feed', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({
+                skills: profile.skills || [],
+                age: profile.age || 18,
+                state: profile.state || 'India'
+              })
+            });
+            const data = await res.json();
+            if (data.success) {
+              allTasks = data.tasks;
+              renderTaskCards(allTasks);
+              updateEarningsSummary();
             }
-            
-            empty.classList.add('hidden');
-            list.innerHTML = `
-                <div class="col-span-1 sm:col-span-2 flex items-center justify-center p-6">
-                    <div class="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+          } catch(e) {
+            document.getElementById('task-cards-grid').innerHTML = 
+              '<p style="color:#ef4444; text-align:center; padding:40px;">Failed to load tasks. Make sure Flask server is running.</p>';
+          }
+        }
+
+        // ── Render Task Cards ──────────────────────────────────────
+        function renderTaskCards(tasks) {
+          const grid = document.getElementById('task-cards-grid');
+          if (!tasks.length) {
+            grid.innerHTML = '<p style="color:#64748b; text-align:center; padding:40px; grid-column:1/-1;">No tasks found for your skills. Update your profile!</p>';
+            return;
+          }
+          
+          const tagColors = {
+            'TRENDING': '#f59e0b',
+            'HIGH PAY': '#10b981',
+            'PASSIVE': '#8b5cf6',
+            'EASY WIN': '#3b82f6',
+            'BEGINNER': '#06b6d4',
+            'HIGH DEMAND': '#ef4444',
+            'STEADY': '#84cc16',
+            'FUN': '#ec4899'
+          };
+
+          grid.innerHTML = tasks.map(task => `
+            <div style="
+              background:#1e293b; border:1px solid #334155;
+              border-radius:12px; padding:18px;
+              transition: border-color 0.2s;
+              cursor:default;
+            " onmouseover="this.style.borderColor='#3b82f6'"
+               onmouseout="this.style.borderColor='#334155'">
+              
+              <div style="display:flex; justify-content:space-between; 
+                align-items:flex-start; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:24px;">${task.icon}</span>
+                  <div>
+                    <p style="color:#e2e8f0; font-weight:600; 
+                      margin:0; font-size:14px;">${task.title}</p>
+                    <p style="color:#64748b; font-size:12px; margin:2px 0 0 0;">
+                      ${task.platform}
+                    </p>
+                  </div>
                 </div>
-            `;
-            
-            try {
-                // Call /api/earn/suggest
-                const response = await fetch('http://127.0.0.1:5000/api/earn/suggest', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_profile: {
-                            age: globalProfile.age,
-                            skills: globalProfile.skills
-                        }
-                    })
-                });
-                
-                if (!response.ok) throw new Error("Earning suggest API failed.");
-                
-                const data = await response.json();
-                const matched = data.result;
-                
-                list.innerHTML = '';
-                matched.forEach(idea => {
-                    const trendBadge = idea.trending ? `<span class="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-orange-950 text-orange-450 border border-orange-500/20 animate-pulse">🔥 Trending</span>` : '';
-                    
-                    list.insertAdjacentHTML('beforeend', `
-                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden flex flex-col justify-between hover:border-slate-600 transition-all duration-300">
-                            <div>
-                                <div class="flex justify-between items-start mb-3">
-                                    <div class="flex items-center gap-2.5">
-                                        <span class="text-2xl">${idea.emoji || '💻'}</span>
-                                        <h4 class="heading-font text-sm font-bold text-white leading-tight">${escapeHTML(idea.title)}</h4>
-                                    </div>
-                                    ${trendBadge}
-                                </div>
-                                <p class="text-xs text-slate-400 leading-relaxed mb-4">${escapeHTML(idea.description)}</p>
-                                
-                                <div class="grid grid-cols-2 gap-3 text-xs mb-4">
-                                    <div class="bg-slate-950 p-2 rounded-lg border border-slate-850">
-                                        <span class="text-[9px] text-slate-500 uppercase font-semibold block">Earning Potential</span>
-                                        <span class="font-bold text-emerald-450">${escapeHTML(idea.earning)}</span>
-                                    </div>
-                                    <div class="bg-slate-950 p-2 rounded-lg border border-slate-850">
-                                        <span class="text-[9px] text-slate-500 uppercase font-semibold block">Difficulty Tier</span>
-                                        <span class="font-bold text-accent capitalize">${escapeHTML(idea.tier)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="bg-slate-950/50 p-2.5 rounded-xl border border-slate-850 text-[10px] flex items-center justify-between">
-                                <span class="text-slate-500 font-semibold uppercase">Platform:</span>
-                                <span class="text-slate-300 font-semibold font-mono truncate max-w-[200px]">${escapeHTML(idea.platform)}</span>
-                            </div>
-                        </div>
-                    `);
-                });
-                
-            } catch (err) {
-                console.error(err);
-                list.innerHTML = `<p class="text-xs text-red-400 p-4">Error loading earning plans.</p>`;
-            }
+                <span style="
+                  background:${tagColors[task.tag] || '#64748b'}22;
+                  color:${tagColors[task.tag] || '#64748b'};
+                  border:1px solid ${tagColors[task.tag] || '#64748b'}44;
+                  padding:3px 8px; border-radius:20px;
+                  font-size:10px; font-weight:700;
+                  white-space:nowrap;
+                ">${task.tag}</span>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; 
+                gap:8px; margin-bottom:14px;">
+                <div style="background:#0f172a; padding:8px; border-radius:6px;">
+                  <p style="color:#64748b; font-size:10px; margin:0;">EARNING</p>
+                  <p style="color:#10b981; font-size:12px; 
+                    font-weight:600; margin:2px 0 0 0;">${task.earning}</p>
+                </div>
+                <div style="background:#0f172a; padding:8px; border-radius:6px;">
+                  <p style="color:#64748b; font-size:10px; margin:0;">TIME</p>
+                  <p style="color:#e2e8f0; font-size:12px; 
+                    font-weight:600; margin:2px 0 0 0;">${task.time}</p>
+                </div>
+              </div>
+
+              <details style="margin-bottom:14px;">
+                <summary style="color:#94a3b8; font-size:12px; 
+                  cursor:pointer; list-style:none;">
+                  📋 How to start ▾
+                </summary>
+                <ol style="color:#64748b; font-size:12px; 
+                  padding-left:16px; margin:8px 0 0 0; line-height:1.8;">
+                  ${task.steps.map(s => `<li>${s}</li>`).join('')}
+                </ol>
+              </details>
+
+              <a href="${task.platform_url}" target="_blank" style="
+                display:block; text-align:center;
+                background:#1d4ed8; color:white;
+                padding:9px; border-radius:8px;
+                text-decoration:none; font-size:13px;
+                font-weight:600;
+              ">
+                Open ${task.platform} →
+              </a>
+            </div>
+          `).join('');
+        }
+
+        // ── Filter Tasks ───────────────────────────────────────────
+        function filterTasks(category) {
+          currentFilter = category;
+          document.querySelectorAll('.task-tab').forEach(btn => {
+            btn.style.background = 'transparent';
+            btn.style.color = '#94a3b8';
+            btn.style.border = '1px solid #334155';
+          });
+          const activeBtn = document.getElementById('tab-' + category);
+          if (activeBtn) {
+            activeBtn.style.background = '#3b82f6';
+            activeBtn.style.color = 'white';
+            activeBtn.style.border = 'none';
+          }
+          const filtered = category === 'all' 
+            ? allTasks 
+            : allTasks.filter(t => t.category === category);
+          renderTaskCards(filtered);
+        }
+
+        // ── Earnings Logger ────────────────────────────────────────
+        function showEarningsLogger() {
+          const modal = document.getElementById('earnings-logger-modal');
+          modal.style.display = 'flex';
+        }
+        function hideEarningsLogger() {
+          document.getElementById('earnings-logger-modal').style.display = 'none';
+        }
+        function saveEarningLog() {
+          const platform = document.getElementById('log-platform').value;
+          const task = document.getElementById('log-task').value;
+          const amount = parseFloat(document.getElementById('log-amount').value);
+          
+          if (!platform || !amount) {
+            alert('Please fill platform and amount');
+            return;
+          }
+          
+          earningLogs.push({
+            platform, task, amount,
+            date: new Date().toISOString().split('T')[0]
+          });
+          localStorage.setItem('yfg_earnings', JSON.stringify(earningLogs));
+          
+          document.getElementById('log-platform').value = '';
+          document.getElementById('log-task').value = '';
+          document.getElementById('log-amount').value = '';
+          
+          hideEarningsLogger();
+          updateEarningsSummary();
+        }
+        function updateEarningsSummary() {
+          const thisMonth = new Date().toISOString().slice(0, 7);
+          const monthLogs = earningLogs.filter(l => l.date.startsWith(thisMonth));
+          const total = monthLogs.reduce((sum, l) => sum + l.amount, 0);
+          
+          document.getElementById('total-earned-display').textContent = 
+            '₹' + total.toLocaleString('en-IN');
+          document.getElementById('tasks-logged-display').textContent = 
+            monthLogs.length;
         }
     </script>
+<script>
+// ── Firebase Init ──────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCGxd3ULSbVctVZtWX7y8UBRW-t48mb2zo",
+  authDomain: "youthfinancialguardian.firebaseapp.com",
+  projectId: "youthfinancialguardian",
+  storageBucket: "youthfinancialguardian.firebasestorage.app",
+  messagingSenderId: "1067778557036",
+  appId: "1:1067778557036:web:2702577b49f3ef913f8449",
+  measurementId: "G-MFZ6C3XRM8"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+// ── Global user_id used everywhere for profile saving ──────
+window.currentUserId = null;
+window.currentUserName = "Guest";
+
+// ── FingerprintJS Device ID (auto fallback) ────────────────
+async function initFingerprint() {
+  const fp = await FingerprintJS.load();
+  const result = await fp.get();
+  return "fp_" + result.visitorId;
+}
+
+// ── Google Sign In ─────────────────────────────────────────
+function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(err => {
+    console.error("Google sign in failed:", err);
+    alert("Sign in failed. Please try again.");
+  });
+}
+
+// ── Sign Out ───────────────────────────────────────────────
+function signOut() {
+  auth.signOut();
+}
+
+// ── Auth State Listener ────────────────────────────────────
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    // Google signed in
+    window.currentUserId = user.uid;
+    window.currentUserName = user.displayName || "User";
+
+    document.getElementById("guest-ui").style.display = "none";
+    document.getElementById("google-ui").style.display = "flex";
+    document.getElementById("user-photo").src = user.photoURL || "";
+    document.getElementById("user-name").textContent = user.displayName || "User";
+
+  } else {
+    // No Google login — use fingerprint
+    const fpId = await initFingerprint();
+    window.currentUserId = fpId;
+    window.currentUserName = "Guest";
+
+    document.getElementById("guest-ui").style.display = "block";
+    document.getElementById("google-ui").style.display = "none";
+  }
+});
+</script>
+<div id="bottom-action-bar" style="
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #1e293b;
+  border-top: 1px solid #334155;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+">
+  <button onclick="executeSaveProfile()" style="
+    flex: 1;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  ">💾 Save Profile</button>
+
+  <button onclick="downloadReport()" style="
+    flex: 1;
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  ">📄 Report</button>
+</div>
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+</script>
 </body>
 </html>

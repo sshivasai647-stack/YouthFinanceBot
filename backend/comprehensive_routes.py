@@ -303,6 +303,283 @@ def suggest_earning_route():
     except Exception as e:
         return handle_error("suggest_earning", e)
 
+@comprehensive_bp.route('/api/earn/task-feed', methods=['POST'])
+def get_task_feed():
+    try:
+        data = validate_json_data()
+        skills = data.get('skills', [])
+        age = data.get('age', 18)
+        state = data.get('state', 'India')
+        
+        # Task database by category
+        task_db = {
+            "surveys": [
+                {
+                    "id": "s1",
+                    "title": "Product Opinion Survey",
+                    "platform": "Toluna",
+                    "platform_url": "https://in.toluna.com",
+                    "earning": "₹50 - ₹200 per survey",
+                    "time": "10-15 mins",
+                    "difficulty": "Easy",
+                    "category": "surveys",
+                    "tag": "TRENDING",
+                    "icon": "📊",
+                    "steps": [
+                        "Register on Toluna with email",
+                        "Complete profile survey",
+                        "Check daily available surveys",
+                        "Redeem points via PayPal or vouchers"
+                    ]
+                },
+                {
+                    "id": "s2",
+                    "title": "App Testing Feedback",
+                    "platform": "UserTesting",
+                    "platform_url": "https://www.usertesting.com",
+                    "earning": "₹800 - ₹1,500 per test",
+                    "time": "20 mins",
+                    "difficulty": "Easy",
+                    "category": "surveys",
+                    "tag": "HIGH PAY",
+                    "icon": "📱",
+                    "steps": [
+                        "Sign up at usertesting.com",
+                        "Pass a sample test",
+                        "Get matched to real app tests",
+                        "Paid via PayPal within 14 days"
+                    ]
+                },
+                {
+                    "id": "s3",
+                    "title": "Brand Research Panel",
+                    "platform": "ySense",
+                    "platform_url": "https://www.ysense.com",
+                    "earning": "₹30 - ₹150 per survey",
+                    "time": "5-20 mins",
+                    "difficulty": "Easy",
+                    "category": "surveys",
+                    "tag": "BEGINNER",
+                    "icon": "🔍",
+                    "steps": [
+                        "Create free account on ySense",
+                        "Complete profile for better matches",
+                        "Do surveys daily",
+                        "Withdraw via Skrill or gift cards"
+                    ]
+                }
+            ],
+            "social": [
+                {
+                    "id": "sm1",
+                    "title": "Instagram Reel Promotion",
+                    "platform": "Winkl",
+                    "platform_url": "https://www.winkl.co",
+                    "earning": "₹500 - ₹5,000 per post",
+                    "time": "1-2 hours",
+                    "difficulty": "Medium",
+                    "category": "social",
+                    "tag": "TRENDING",
+                    "icon": "📸",
+                    "steps": [
+                        "Register as creator on Winkl",
+                        "Connect your Instagram account",
+                        "Apply to brand campaigns",
+                        "Post and get paid directly"
+                    ]
+                },
+                {
+                    "id": "sm2",
+                    "title": "YouTube Shorts Creator",
+                    "platform": "YouTube",
+                    "platform_url": "https://youtube.com",
+                    "earning": "₹300 - ₹3,000 per 1000 views",
+                    "time": "2-3 hours",
+                    "difficulty": "Medium",
+                    "category": "social",
+                    "tag": "PASSIVE",
+                    "icon": "🎬",
+                    "steps": [
+                        "Create YouTube channel",
+                        "Post 1 Short daily for 30 days",
+                        "Enable monetization at 500 subs",
+                        "Earn from ads + brand deals"
+                    ]
+                },
+                {
+                    "id": "sm3",
+                    "title": "Meme Page Monetization",
+                    "platform": "Instagram",
+                    "platform_url": "https://instagram.com",
+                    "earning": "₹1,000 - ₹10,000/month",
+                    "time": "1 hour/day",
+                    "difficulty": "Easy",
+                    "category": "social",
+                    "tag": "FUN",
+                    "icon": "😂",
+                    "steps": [
+                        "Create niche meme page",
+                        "Post 3 memes daily",
+                        "Grow to 5K followers",
+                        "Charge for shoutouts"
+                    ]
+                }
+            ],
+            "freelance": [
+                {
+                    "id": "f1",
+                    "title": "Logo Design Projects",
+                    "platform": "Fiverr",
+                    "platform_url": "https://www.fiverr.com",
+                    "earning": "₹500 - ₹5,000 per logo",
+                    "time": "2-4 hours",
+                    "difficulty": "Medium",
+                    "category": "freelance",
+                    "tag": "HIGH DEMAND",
+                    "icon": "🎨",
+                    "skills_needed": ["Design"],
+                    "steps": [
+                        "Create Fiverr seller account",
+                        "Make 3 sample logos for portfolio",
+                        "Create gig starting at ₹500",
+                        "Deliver fast for 5-star reviews"
+                    ]
+                },
+                {
+                    "id": "f2",
+                    "title": "Python/Web Dev Projects",
+                    "platform": "Internshala",
+                    "platform_url": "https://internshala.com/freelancer",
+                    "earning": "₹2,000 - ₹20,000 per project",
+                    "time": "1-2 weeks",
+                    "difficulty": "Hard",
+                    "category": "freelance",
+                    "tag": "HIGH PAY",
+                    "icon": "💻",
+                    "skills_needed": ["Coding"],
+                    "steps": [
+                        "Register on Internshala freelancer",
+                        "Build 2 projects on GitHub",
+                        "Bid on small projects first",
+                        "Build reviews then raise rates"
+                    ]
+                },
+                {
+                    "id": "f3",
+                    "title": "Content Writing",
+                    "platform": "Pepper Content",
+                    "platform_url": "https://www.peppercontent.io",
+                    "earning": "₹1 - ₹3 per word",
+                    "time": "2-3 hours per article",
+                    "difficulty": "Easy",
+                    "category": "freelance",
+                    "tag": "STEADY",
+                    "icon": "✍️",
+                    "skills_needed": ["Writing"],
+                    "steps": [
+                        "Apply as writer on Pepper Content",
+                        "Pass their writing test",
+                        "Pick topics from dashboard",
+                        "Get paid weekly via bank transfer"
+                    ]
+                },
+                {
+                    "id": "f4",
+                    "title": "AI Prompt Engineering",
+                    "platform": "Scale AI",
+                    "platform_url": "https://scale.com/jobs",
+                    "earning": "₹500 - ₹2,000 per task",
+                    "time": "1-2 hours",
+                    "difficulty": "Medium",
+                    "category": "freelance",
+                    "tag": "TRENDING",
+                    "icon": "🤖",
+                    "steps": [
+                        "Apply as AI trainer on Scale AI",
+                        "Complete onboarding tasks",
+                        "Work on AI data tasks daily",
+                        "Paid weekly via Payoneer"
+                    ]
+                }
+            ],
+            "referral": [
+                {
+                    "id": "r1",
+                    "title": "Zerodha Referral",
+                    "platform": "Zerodha",
+                    "platform_url": "https://zerodha.com/open-account",
+                    "earning": "₹300 per referral",
+                    "time": "5 mins to share",
+                    "difficulty": "Easy",
+                    "category": "referral",
+                    "tag": "PASSIVE",
+                    "icon": "📈",
+                    "steps": [
+                        "Open free Zerodha account",
+                        "Get your referral link",
+                        "Share with friends/family",
+                        "Earn ₹300 per account opened"
+                    ]
+                },
+                {
+                    "id": "r2",
+                    "title": "Groww App Referral",
+                    "platform": "Groww",
+                    "platform_url": "https://groww.in",
+                    "earning": "₹100 per referral",
+                    "time": "2 mins to share",
+                    "difficulty": "Easy",
+                    "category": "referral",
+                    "tag": "EASY WIN",
+                    "icon": "🌱",
+                    "steps": [
+                        "Download and open Groww app",
+                        "Go to Refer and Earn section",
+                        "Share your unique link",
+                        "Get ₹100 when friend invests"
+                    ]
+                },
+                {
+                    "id": "r3",
+                    "title": "Meesho Supplier Referral",
+                    "platform": "Meesho",
+                    "platform_url": "https://supplier.meesho.com",
+                    "earning": "₹500 - ₹2,000 per referral",
+                    "time": "10 mins",
+                    "difficulty": "Easy",
+                    "category": "referral",
+                    "tag": "HIGH PAY",
+                    "icon": "🛍️",
+                    "steps": [
+                        "Join Meesho supplier program",
+                        "Refer local shop owners",
+                        "They list products on Meesho",
+                        "You earn per successful onboard"
+                    ]
+                }
+            ]
+        }
+        
+        # Filter by skills if provided
+        all_tasks = []
+        for category, tasks in task_db.items():
+            for task in tasks:
+                needed = task.get('skills_needed', [])
+                if not needed or any(
+                    s.lower() in [sk.lower() for sk in skills] 
+                    for s in needed
+                ):
+                    all_tasks.append(task)
+        
+        return jsonify({
+            "success": True,
+            "tasks": all_tasks,
+            "total": len(all_tasks)
+        })
+        
+    except Exception as e:
+        return handle_error("get_task_feed", e)
+
 # ====================================================================
 # GOAL TRACKER MODULE ROUTES
 # ====================================================================
@@ -1016,16 +1293,13 @@ def calculate_financials_route():
         return handle_error("calculate_financials_route", e)
 
 # ====================================================================
-# PROFILE & OTP AUTHENTICATION ROUTES (No MongoDB Dependency)
+# PROFILE ROUTES (No MongoDB Dependency)
 # ====================================================================
 
 import random
 import os
 import json
 from datetime import datetime, timedelta
-
-# In-memory OTP store
-IN_MEMORY_OTP_STORE = {}
 
 # JSON File Profile store
 PROFILES_FILE_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'profiles.json')
@@ -1044,63 +1318,6 @@ def save_profiles(data):
     os.makedirs(os.path.dirname(PROFILES_FILE_PATH), exist_ok=True)
     with open(PROFILES_FILE_PATH, 'w') as f:
         json.dump(data, f, indent=4)
-
-
-@comprehensive_bp.route('/api/mobile-auth/send-otp', methods=['POST'])
-def send_otp():
-    try:
-        data = request.get_json() or {}
-        phone = data.get('phone')
-        if not phone or len(str(phone)) != 10:
-            return jsonify({"error": "Invalid phone number (must be 10 digits)"}), 400
-            
-        otp = str(random.randint(100000, 999999))
-        expiry = datetime.utcnow() + timedelta(minutes=5)
-        
-        IN_MEMORY_OTP_STORE[phone] = {
-            "otp": otp,
-            "expiry": expiry,
-            "attempts": 0
-        }
-        
-        return jsonify({"message": "OTP sent successfully", "otp": otp}), 200
-    except Exception as e:
-        return handle_error("send_otp", e)
-
-@comprehensive_bp.route('/api/mobile-auth/verify-otp', methods=['POST'])
-def verify_otp():
-    try:
-        data = request.get_json() or {}
-        phone = data.get('phone')
-        otp = data.get('otp')
-        
-        if not phone or not otp:
-            return jsonify({"error": "Phone and OTP required"}), 400
-            
-        record = IN_MEMORY_OTP_STORE.get(phone)
-        
-        if not record:
-            return jsonify({"error": "OTP not found. Please request a new one."}), 400
-            
-        if datetime.utcnow() > record.get("expiry", datetime.utcnow()):
-            del IN_MEMORY_OTP_STORE[phone]
-            return jsonify({"error": "OTP expired"}), 400
-            
-        attempts = record.get("attempts", 0)
-        if attempts >= 3:
-            del IN_MEMORY_OTP_STORE[phone]
-            return jsonify({"error": "Max attempts reached. Request a new OTP."}), 400
-            
-        if record.get("otp") != str(otp):
-            IN_MEMORY_OTP_STORE[phone]["attempts"] += 1
-            return jsonify({"error": "Invalid OTP"}), 400
-            
-        # Success
-        del IN_MEMORY_OTP_STORE[phone]
-        return jsonify({"message": "OTP verified successfully", "user_id": phone}), 200
-        
-    except Exception as e:
-        return handle_error("verify_otp", e)
 
 @comprehensive_bp.route('/api/save-profile', methods=['POST'])
 def save_profile():
@@ -1163,7 +1380,7 @@ def create_comprehensive_app():
     # Enable CORS globally for local testing
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"],
+            "origins": ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://localhost:8000", "http://127.0.0.1:8000"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "supports_credentials": True
